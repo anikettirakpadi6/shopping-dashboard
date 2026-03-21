@@ -16,32 +16,37 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials.password)
-          throw new Error("Email & Password are required!");
+        try {
+          if (!credentials?.email || !credentials.password)
+            throw new Error("Email & Password are required!");
 
-        await connectToDatabase();
+          await connectToDatabase();
 
-        const user = await User.findOne({
-          email: credentials.email.toLowerCase(),
-        }).lean();
+          const user = await User.findOne({
+            email: credentials.email.toLowerCase(),
+          }).lean();
 
-        if (!user) throw new Error("Invalid email or password!");
+          if (!user) throw new Error("Invalid email or password!");
 
-        if (!user.isActive) throw new Error("Account inactive.");
+          if (!user.isActive) throw new Error("Account inactive.");
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password,
-        );
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password,
+          );
 
-        if (!isPasswordValid) throw new Error("Invalid email or password!");
+          if (!isPasswordValid) throw new Error("Invalid email or password!");
 
-        return {
-          id: String(user._id),
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        };
+          return {
+            id: String(user._id),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          };
+        } catch (err) {
+          console.error("AUTH ERROR:", err);
+          throw err;
+        }
       },
     }),
   ],
