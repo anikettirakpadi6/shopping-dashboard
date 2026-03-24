@@ -30,5 +30,5 @@ export default async function DashboardPage() {
       content = <div>Invalid Role!</div>;
   }
 
-  return <DashboardLayout>{content}</DashboardLayout>;
+  return <DashboardLayout role={role}>{content}</DashboardLayout>;
 }
