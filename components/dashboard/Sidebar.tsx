@@ -3,19 +3,26 @@ import { Home, Users, BarChart3, ShoppingCart } from "lucide-react";
 type MenuItem = {
   label: string;
   key: string;
+  icon: any;
 };
 
-const menuConfig: Record<string, Array<{ label: string; icon: any }>> = {
+type Props = {
+  role: string;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+};
+
+const menuConfig: Record<string, MenuItem[]> = {
   admin: [
-    { label: "Overview", icon: Home },
-    { label: "Users", icon: Users },
-    { label: "Analytics", icon: BarChart3 },
+    { label: "Overview", icon: Home, key: "overview" },
+    { label: "Users", icon: Users, key: "users" },
+    { label: "Analytics", icon: BarChart3, key: "analytics" },
   ],
-  customer: [{ label: "My Orders", icon: ShoppingCart }],
-  employee: [{ label: "Tasks", icon: Home }],
+  customer: [{ label: "My Orders", icon: ShoppingCart, key: "orders" }],
+  employee: [{ label: "Tasks", icon: Home, key: "tasks" }],
 };
 
-export default function Sidebar({ role }: { role: string }) {
+export default function Sidebar({ role, activeTab, setActiveTab }: Props) {
   const normalizedRole = role?.toLowerCase();
   const menu = menuConfig[normalizedRole] || [];
 
@@ -26,15 +33,21 @@ export default function Sidebar({ role }: { role: string }) {
       </h1>
 
       <ul className="space-y-2">
-        {menu.map((item, idx) => (
-          <li
-            key={idx}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-200 cursor-pointer transition"
-          >
-            <item.icon size={18} />
-            <span>{item.label}</span>
-          </li>
-        ))}
+        {menu.map((item) => {
+          const isActive = activeTab === item.key;
+
+          return (
+            <li
+              key={item.key}
+              onClick={() => setActiveTab(item.key)}
+              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition
+                ${isActive ? "bg-black text-white" : "hover:bg-gray-200"}`}
+            >
+              <item.icon size={18} />
+              <span className="font-medium">{item.label}</span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

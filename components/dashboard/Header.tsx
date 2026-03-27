@@ -4,7 +4,7 @@ export default function Header() {
       <input
         type="text"
         placeholder="Search"
-        className="border border-black text-black rounded-lg px-4 py-2 w-1/3 focus:outline-none focus:ring-2 focus:ring-gray"
+        className="border text-black rounded-lg px-4 py-2 w-1/3"
       />
 
       <div className="flex items-center gap-4">

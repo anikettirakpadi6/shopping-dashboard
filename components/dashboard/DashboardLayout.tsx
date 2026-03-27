@@ -1,16 +1,30 @@
+"use client";
+
+import React from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
 type Props = {
   children: React.ReactNode;
   role: string;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 };
 
-export default function DashboardLayout({ children, role }: Props) {
+const DashboardLayout: React.FC<Props> = ({
+  children,
+  role,
+  activeTab,
+  setActiveTab,
+}) => {
   return (
     <div className="flex bg-white min-h-screen">
-      <div className="border-r border-gray">
-        <Sidebar role={role} />
+      <div className="border-r">
+        <Sidebar
+          role={role}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
       </div>
 
       <div className="flex-1 flex flex-col">
@@ -19,4 +33,6 @@ export default function DashboardLayout({ children, role }: Props) {
       </div>
     </div>
   );
-}
+};
+
+export default DashboardLayout;
