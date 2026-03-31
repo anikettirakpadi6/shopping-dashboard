@@ -18,8 +18,8 @@ const DashboardLayout: React.FC<Props> = ({
   setActiveTab,
 }) => {
   return (
-    <div className="flex bg-white min-h-screen">
-      <div className="border-r">
+    <div className="flex bg-white dark:bg-slate-900 min-h-screen transition-colors duration-300">
+      <div className="border-r border-gray-200 dark:border-gray-700">
         <Sidebar
           role={role}
           activeTab={activeTab}
@@ -29,7 +29,9 @@ const DashboardLayout: React.FC<Props> = ({
 
       <div className="flex-1 flex flex-col">
         <Header />
-        <div className="p-6 bg-gray-100 min-h-screen">{children}</div>
+        <div className="p-6 bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white min-h-screen transition-colors duration-300">
+          {children}
+        </div>
       </div>
     </div>
   );

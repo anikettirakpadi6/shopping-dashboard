@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +47,9 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         className="w-full max-w-lg p-10 rounded-xl shadow-lg bg-white"
       >
-        <h2 className="text-2xl font-semibold mb-6 text-center text-gray-900">Login</h2>
+        <h2 className="text-2xl font-semibold mb-6 text-center text-gray-900">
+          Login
+        </h2>
 
         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
@@ -62,13 +66,24 @@ export default function LoginPage() {
 
         <div className="mb-6">
           <label className="block text-sm mb-1 text-gray-800">Password</label>
-          <input
-            type="password"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          ></input>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 hover:text-black"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </div>
 
         <button

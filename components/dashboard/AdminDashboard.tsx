@@ -14,13 +14,40 @@ type UserType = {
   email: string;
   role: string;
   isActive: boolean;
+  password?: string;
+};
+
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+
+type AnalyticsData = {
+  totalUsers: number;
+  activeUsers: number;
+  admins: number;
+  customers: number;
 };
 
 function Card({ title, value }: { title: string; value: string }) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-black/10 shadow-sm hover:shadow-md transition">
-      <h2 className="text-sm font-medium text-black">{title}</h2>
-      <p className="text-2xl font-bold mt-2 text-black">{value}</p>
+    <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
+      <h2 className="text-sm font-medium text-black dark:text-white">{title}</h2>
+      <p className="text-2xl font-bold mt-2 text-black dark:text-white">{value}</p>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
+      <p className="text-sm font-medium text-black dark:text-white">{label}</p>
+      <p className="text-2xl font-bold mt-2 text-black dark:text-white">{value}</p>
     </div>
   );
 }
@@ -30,7 +57,7 @@ export default function AdminDashboard({ activeTab }: Props) {
     return <UsersSection />;
   }
 
-  if (activeTab === "anlaytics") {
+  if (activeTab === "analytics") {
     return <AnalyticsSection />;
   }
 
@@ -38,6 +65,16 @@ export default function AdminDashboard({ activeTab }: Props) {
 
   // Overview Section
   function OverviewSection() {
+    const salesData = [
+      { day: "Mon", sales: 400 },
+      { day: "Tue", sales: 700 },
+      { day: "Wed", sales: 500 },
+      { day: "Thu", sales: 900 },
+      { day: "Fri", sales: 1200 },
+      { day: "Sat", sales: 800 },
+      { day: "Sun", sales: 600 },
+    ];
+
     return (
       <div className="p-6 space-y-6">
         {/* KPI CARDS */}
@@ -56,18 +93,26 @@ export default function AdminDashboard({ activeTab }: Props) {
               Sales Overview
             </h2>
 
-            <div className="h-64 flex items-center justify-center border border-dashed border-black/20 rounded-lg">
-              <span className="text-black font-medium">Chart</span>
+            <div className="h-[260px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={salesData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="sales" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
           {/* ACTIVITY */}
-          <div className="bg-white p-5 rounded-2xl border border-black/10">
-            <h2 className="text-lg font-semibold mb-4 text-black">
+          <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
+            <h2 className="text-lg font-semibold text-black dark:text-white">
               Recent Activity
             </h2>
 
-            <ul className="space-y-3 text-sm text-black">
+            <ul className="space-y-3 text-sm text-black dark:text-white">
               <li className="border-b pb-2">New user registered</li>
               <li className="border-b pb-2">Order #1234 placed</li>
               <li>Payment received</li>
@@ -162,27 +207,45 @@ export default function AdminDashboard({ activeTab }: Props) {
       setDeleteId(id);
     };
 
-    const handleSave = async (updatedUser: UserType) => {
+    const handleSave = async (user: UserType) => {
       try {
-        const res = await fetch(`/api/users/${updatedUser._id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
+        const isNew = !user._id;
+
+        // Avoid overwriting existing password when empty (edit mode)
+        const payload: Partial<UserType> = { ...user };
+        if (!isNew && !payload.password) {
+          delete payload.password;
+        }
+
+        const res = await fetch(
+          isNew ? "/api/users" : `/api/users/${user._id}`,
+          {
+            method: isNew ? "POST" : "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
           },
-          body: JSON.stringify(updatedUser),
-        });
+        );
 
         if (!res.ok) throw new Error();
 
-        // Update UI
-        setUsers((prev) =>
-          prev.map((u) => (u._id === updatedUser._id ? updatedUser : u)),
-        );
+        const data = await res.json();
 
-        toast.success("User updated successfully!");
+        if (isNew) {
+          // ADD to list
+          setUsers((prev) => [data.user, ...prev]);
+        } else {
+          // UPDATE list
+          setUsers((prev) =>
+            prev.map((u) => (u._id === user._id ? data.user : u)),
+          );
+        }
+
+        toast.success(isNew ? "User added" : "User updated");
         setSelectedUser(null);
-      } catch (err) {
-        toast.error("Failed to update user!");
+      } catch {
+        toast.error("Operation failed");
       }
     };
 
@@ -207,17 +270,35 @@ export default function AdminDashboard({ activeTab }: Props) {
     };
 
     return (
-      <div className="p-6 space-y-6">
-        <h1 className="text-2xl text-black font-bold">Users</h1>
+      <div className="p-6 space-y-6 bg-white dark:bg-slate-800 text-black dark:text-white transition-colors duration-300">
+        <h1 className="text-2xl text-black dark:text-white font-bold">Users</h1>
 
         {/* Search */}
-        <input
-          type="text"
-          placeholder="Search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border px-3 py-2 rounded-md text-black w-64"
-        />
+        <div className="flex justify-between items-center">
+          <input
+            type="text"
+            placeholder="Search a user"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border text-gray-900 dark:text-white bg-white dark:bg-slate-700 rounded-lg px-4 py-2 w-1/3 transition-colors duration-300"
+          />
+
+          <button
+            onClick={() =>
+              setSelectedUser({
+                _id: "",
+                name: "",
+                email: "",
+                role: "customer",
+                isActive: true,
+                password: "",
+              })
+            }
+            className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800"
+          >
+            + Add User
+          </button>
+        </div>
 
         <div className="bg-white rounded-2xl border border-black/10 overflow-hidden">
           <table className="w-full text-sm border-collapse">
@@ -351,6 +432,89 @@ export default function AdminDashboard({ activeTab }: Props) {
             onSave={handleSave}
           />
         )}
+      </div>
+    );
+  }
+
+  function AnalyticsSection() {
+    const [stats, setStats] = useState({
+      total: 0,
+      active: 0,
+      admins: 0,
+      customers: 0,
+      employees: 0,
+    });
+
+    const [loading, setLoading] = useState(true);
+
+    const chartData = [
+      { day: "Mon", users: 12 },
+      { day: "Tue", users: 18 },
+      { day: "Wed", users: 10 },
+      { day: "Thu", users: 22 },
+      { day: "Fri", users: 28 },
+      { day: "Sat", users: 20 },
+      { day: "Sun", users: 16 },
+    ];
+
+    useEffect(() => {
+      fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/users");
+        const data = await res.json();
+
+        const users = data.users || [];
+
+        setStats({
+          total: users.length,
+          active: users.filter((u: any) => u.isActive).length,
+          admins: users.filter((u: any) => u.role === "admin").length,
+          customers: users.filter((u: any) => u.role === "customer").length,
+          employees: users.filter((u: any) => u.role === "employee").length,
+        });
+      } catch (err) {
+        console.error("Analytics error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (loading) {
+      return <div className="p-6 text-black">Loading analytics...</div>;
+    }
+
+    return (
+      <div className="p-6 text-black space-y-6">
+        <h1 className="text-2xl text-black dark:text-white font-bold">Analytics</h1>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <StatCard label="Total Users" value={stats.total} />
+          <StatCard label="Active Users" value={stats.active} />
+          <StatCard label="Admins" value={stats.admins} />
+          <StatCard label="Customers" value={stats.customers} />
+          <StatCard label="Employees" value={stats.employees} />
+        </div>
+
+        {/* Chart */}
+        <div className="bg-white p-5 rounded-xl shadow">
+          <h2 className="text-lg font-semibold mb-4">Weekly Activity</h2>
+
+          <div className="h-[260px] w-full min-w-0">
+            <ResponsiveContainer>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="users" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     );
   }

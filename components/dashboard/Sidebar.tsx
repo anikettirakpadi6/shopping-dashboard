@@ -27,8 +27,8 @@ export default function Sidebar({ role, activeTab, setActiveTab }: Props) {
   const menu = menuConfig[normalizedRole] || [];
 
   return (
-    <div className="h-screen w-64 bg-white text-gray-900 p-5 flex flex-col">
-      <h1 className="text-2xl font-bold mb-8 capitalize">
+    <div className="h-screen w-64 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 flex flex-col transition-colors duration-300">
+      <h1 className="text-2xl font-bold mb-8 capitalize text-black dark:text-white">
         {normalizedRole} Panel
       </h1>
 
@@ -40,8 +40,8 @@ export default function Sidebar({ role, activeTab, setActiveTab }: Props) {
             <li
               key={item.key}
               onClick={() => setActiveTab(item.key)}
-              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition
-                ${isActive ? "bg-black text-white" : "hover:bg-gray-200"}`}
+              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors duration-300
+                ${isActive ? "bg-black text-white dark:bg-white dark:text-black" : "hover:bg-gray-200 dark:hover:bg-slate-700"}`}
             >
               <item.icon size={18} />
               <span className="font-medium">{item.label}</span>
