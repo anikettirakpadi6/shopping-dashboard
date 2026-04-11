@@ -1,4 +1,4 @@
-import { Home, Users, BarChart3, ShoppingCart } from "lucide-react";
+import { Home, Users, BarChart3, ShoppingCart, Package } from "lucide-react";
 
 type MenuItem = {
   label: string;
@@ -17,6 +17,7 @@ const menuConfig: Record<string, MenuItem[]> = {
     { label: "Overview", icon: Home, key: "overview" },
     { label: "Users", icon: Users, key: "users" },
     { label: "Analytics", icon: BarChart3, key: "analytics" },
+    { label: "Products", icon: Package, key: "products" },
   ],
   customer: [{ label: "My Orders", icon: ShoppingCart, key: "orders" }],
   employee: [{ label: "Tasks", icon: Home, key: "tasks" }],

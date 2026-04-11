@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import EditUserModal from "@/components/EditUserModal";
+import ProductModal from "@/components/ProductModal";
+import DeleteConfirm from "@/components/DeleteConfirm"; // adjust path if needed
 
 type Props = {
   activeTab: string;
@@ -34,11 +35,30 @@ type AnalyticsData = {
   customers: number;
 };
 
+type Product = {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  image: string;
+  categoryId: string | Category | null;
+};
+
+type Category = {
+  _id: string;
+  name: string;
+};
+
 function Card({ title, value }: { title: string; value: string }) {
   return (
     <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
-      <h2 className="text-sm font-medium text-black dark:text-white">{title}</h2>
-      <p className="text-2xl font-bold mt-2 text-black dark:text-white">{value}</p>
+      <h2 className="text-sm font-medium text-black dark:text-white">
+        {title}
+      </h2>
+      <p className="text-2xl font-bold mt-2 text-black dark:text-white">
+        {value}
+      </p>
     </div>
   );
 }
@@ -47,7 +67,9 @@ function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
       <p className="text-sm font-medium text-black dark:text-white">{label}</p>
-      <p className="text-2xl font-bold mt-2 text-black dark:text-white">{value}</p>
+      <p className="text-2xl font-bold mt-2 text-black dark:text-white">
+        {value}
+      </p>
     </div>
   );
 }
@@ -59,6 +81,10 @@ export default function AdminDashboard({ activeTab }: Props) {
 
   if (activeTab === "analytics") {
     return <AnalyticsSection />;
+  }
+
+  if (activeTab === "products") {
+    return <ProductsSection />;
   }
 
   return <OverviewSection />;
@@ -294,7 +320,7 @@ export default function AdminDashboard({ activeTab }: Props) {
                 password: "",
               })
             }
-            className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800"
+            className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-md hover:bg-gray-800"
           >
             + Add User
           </button>
@@ -488,7 +514,9 @@ export default function AdminDashboard({ activeTab }: Props) {
 
     return (
       <div className="p-6 text-black space-y-6">
-        <h1 className="text-2xl text-black dark:text-white font-bold">Analytics</h1>
+        <h1 className="text-2xl text-black dark:text-white font-bold">
+          Analytics
+        </h1>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -515,6 +543,238 @@ export default function AdminDashboard({ activeTab }: Props) {
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  function ProductsSection() {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showModal, setShowModal] = React.useState(false);
+    const [imagePreview, setImagePreview] = React.useState("");
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+
+    const [form, setForm] = useState({
+      name: "",
+      price: "",
+      quantity: "",
+      image: "",
+      description: "",
+      categoryId: "",
+    });
+
+    const [editingId, setEditingId] = useState<string | null>(null);
+
+    // Fetch data
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [pRes, cRes] = await Promise.all([
+          fetch("/api/products"),
+          fetch("/api/categories"),
+        ]);
+
+        const pData = await pRes.json();
+        const cData = await cRes.json();
+
+        setProducts(pData);
+        setCategories(cData);
+      } catch (err) {
+        console.error("Fetch error:", err);
+      }
+      setLoading(false);
+    };
+
+    useEffect(() => {
+      fetchData();
+    }, []);
+
+    // Handle input
+    const handleChange = (key: string, value: string) => {
+      setForm((prev) => ({ ...prev, [key]: value }));
+    };
+
+    // Submit (Add / Update)
+    const handleSubmit = async () => {
+      if (!form.name || !form.price) return;
+
+      const method = editingId ? "PUT" : "POST";
+      const url = editingId ? `/api/products/${editingId}` : `/api/products`;
+
+      await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          price: Number(form.price),
+          quantity: Number(form.quantity),
+        }),
+      });
+
+      // reset
+      setForm({
+        name: "",
+        price: "",
+        quantity: "",
+        image: "",
+        description: "",
+        categoryId: "",
+      });
+      setEditingId(null);
+
+      fetchData();
+    };
+
+    // Delete
+    const confirmDelete = async () => {
+      if (!deleteId) return;
+
+      await fetch(`/api/products/${deleteId}`, {
+        method: "DELETE",
+      });
+
+      setDeleteId(null);
+      fetchData();
+    };
+
+    const cancelDelete = () => {
+      setDeleteId(null);
+    };
+
+    // Edit
+    const handleEdit = (p: Product) => {
+      setForm({
+        name: p.name || "",
+        price: String(p.price) || "",
+        quantity: String(p.quantity) || "",
+        image: p.image || "",
+        description: p.description || "",
+        categoryId:
+          typeof p.categoryId === "object" && p.categoryId !== null
+            ? p.categoryId._id
+            : p.categoryId || "",
+      });
+      setEditingId(p._id);
+    };
+
+    return (
+      <div className="p-6 space-y-6">
+        {/* HEADER */}
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl text-black dark:text-white font-bold">
+            Product Inventory
+          </h2>
+
+          <button
+            onClick={() => {
+              setForm({
+                name: "",
+                price: "",
+                quantity: "",
+                image: "",
+                description: "",
+                categoryId: "",
+              });
+              setEditingId(null);
+              setImagePreview("");
+              setShowModal(true);
+            }}
+            className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg"
+          >
+            + Add Product
+          </button>
+        </div>
+
+        {/* EMPTY STATE */}
+        {!loading && products.length === 0 && (
+          <div className="text-center py-20 border rounded-xl">
+            <p className="text-md text-black dark:text-white font-medium">
+              No products available
+            </p>
+          </div>
+        )}
+
+        {/* GRID */}
+        {!loading && products.length > 0 && (
+          <div className="grid grid-cols-4 gap-4">
+            {products.map((p: Product) => (
+              <div
+                key={p._id}
+                className="border border-black/10 rounded-xl p-4 bg-white"
+              >
+                <div className="h-40 w-full flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
+                  <img
+                    src={
+                      p.image && !p.image.startsWith("blob:")
+                        ? p.image
+                        : "https://via.placeholder.com/150"
+                    }
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+
+                <h3 className="font-semibold text-black">{p.name}</h3>
+
+                <p className="text-black text-sm">₹{p.price}</p>
+
+                <p
+                  className={`text-sm ${
+                    p.quantity < 5 ? "text-red-600 font-semibold" : "text-black"
+                  }`}
+                >
+                  Stock: {p.quantity}
+                </p>
+
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => {
+                      handleEdit(p);
+                      setImagePreview(
+                        p.image && !p.image.startsWith("blob:") ? p.image : ""
+                      );
+                      setShowModal(true);
+                    }}
+                    className="px-3 py-1 border rounded hover:bg-black hover:text-white"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setDeleteId(String(p._id));
+                    }}
+                    className="px-3 py-1 border rounded hover:bg-red-500 hover:text-white"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <ProductModal
+          show={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={async () => {
+            await handleSubmit();
+            setShowModal(false);
+          }}
+          form={form}
+          setForm={setForm}
+          categories={categories}
+          editingId={editingId}
+          imagePreview={imagePreview}
+          setImagePreview={setImagePreview}
+        />
+
+        {deleteId && (
+          <DeleteConfirm
+            onConfirm={confirmDelete}
+            onCancel={cancelDelete}
+          />
+        )}
       </div>
     );
   }
