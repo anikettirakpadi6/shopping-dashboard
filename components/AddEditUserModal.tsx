@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 type UserType = {
   _id: string;
@@ -18,7 +19,12 @@ type Props = {
 export default function EditUserModal({ user, onClose, onSave }: Props) {
   const [form, setForm] = useState<UserType>(user);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+  }>({});
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     setForm(user);
@@ -114,18 +120,33 @@ export default function EditUserModal({ user, onClose, onSave }: Props) {
           {/* PASSWORD */}
           <div>
             <label className="text-sm text-black font-medium">Password</label>
-            <input
-              type="password"
-              className={`w-full border px-3 py-2 rounded mt-1 text-black ${
-                errors.password ? "border-red-500" : "border-gray-300"
-              }`}
-              value={form.password ?? ""}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              placeholder={form._id ? "Leave blank to keep existing password" : "Enter a password"}
-            />
-            {errors.password && (
-              <p className="text-xs text-red-500 mt-1">{errors.password}</p>
-            )}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                className={`w-full border px-3 py-2 rounded mt-1 text-black ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                }`}
+                value={form.password ?? ""}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder={
+                  form._id
+                    ? "Leave blank to keep existing password"
+                    : "Enter a password"
+                }
+              />
+              {errors.password && (
+                <p className="text-xs text-red-500 mt-1">{errors.password}</p>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 hover:text-black"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {/* ROLE */}

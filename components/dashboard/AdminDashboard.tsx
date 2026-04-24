@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
-import EditUserModal from "@/components/EditUserModal";
+import EditUserModal from "@/components/AddEditUserModal";
 import ProductModal from "@/components/ProductModal";
 import DeleteConfirm from "@/components/DeleteConfirm"; // adjust path if needed
 
