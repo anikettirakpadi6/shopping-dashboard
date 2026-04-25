@@ -7,6 +7,7 @@ import DeleteConfirm from "@/components/DeleteConfirm"; // adjust path if needed
 
 type Props = {
   activeTab: string;
+  isCurrency?: boolean;
 };
 
 type UserType = {
@@ -29,10 +30,21 @@ import {
 } from "recharts";
 
 type AnalyticsData = {
-  totalUsers: number;
-  activeUsers: number;
-  admins: number;
-  customers: number;
+  users: {
+    total: number;
+    active: number;
+  };
+  products: {
+    total: number;
+    lowStock: number;
+    outOfStock: number;
+  };
+  orders: {
+    total: number;
+    revenue: number;
+    pending: number;
+    completed: number;
+  };
 };
 
 type Product = {
@@ -50,6 +62,15 @@ type Category = {
   name: string;
 };
 
+type Order = {
+  _id: string;
+  user?: { name: string };
+  products: { name: string; quantity: number }[];
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+};
+
 function Card({ title, value }: { title: string; value: string }) {
   return (
     <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
@@ -63,12 +84,17 @@ function Card({ title, value }: { title: string; value: string }) {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value, isCurrency = false }: { label: string; value: number; isCurrency?: boolean }) {
   return (
     <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
       <p className="text-sm font-medium text-black dark:text-white">{label}</p>
-      <p className="text-2xl font-bold mt-2 text-black dark:text-white">
+      {/* <p className="text-2xl font-bold mt-2 text-black dark:text-white">
         {value}
+      </p> */}
+      <p className="text-2xl font-bold mt-2 text-black dark:text-white">
+        {isCurrency
+        ? `₹${value.toLocaleString("en-IN")}`
+        : value}
       </p>
     </div>
   );
@@ -85,6 +111,10 @@ export default function AdminDashboard({ activeTab }: Props) {
 
   if (activeTab === "products") {
     return <ProductsSection />;
+  }
+
+  if (activeTab === "orders") {
+    return <OrdersSection/>
   }
 
   return <OverviewSection />;
@@ -463,44 +493,38 @@ export default function AdminDashboard({ activeTab }: Props) {
   }
 
   function AnalyticsSection() {
-    const [stats, setStats] = useState({
-      total: 0,
-      active: 0,
-      admins: 0,
-      customers: 0,
-      employees: 0,
+    const [stats, setStats] = useState<AnalyticsData>({
+      users: {
+        total: 0,
+        active: 0,
+      },
+      products: {
+        total: 0,
+        lowStock: 0,
+        outOfStock: 0,
+      },
+      orders: {
+        total: 0,
+        revenue: 0,
+        pending: 0,
+        completed: 0,
+      },
     });
 
+    const [chartData, setChartData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const chartData = [
-      { day: "Mon", users: 12 },
-      { day: "Tue", users: 18 },
-      { day: "Wed", users: 10 },
-      { day: "Thu", users: 22 },
-      { day: "Fri", users: 28 },
-      { day: "Sat", users: 20 },
-      { day: "Sun", users: 16 },
-    ];
-
     useEffect(() => {
-      fetchStats();
+      fetchAnalytics();
     }, []);
 
-    const fetchStats = async () => {
+    const fetchAnalytics = async () => {
       try {
-        const res = await fetch("/api/users");
+        const res = await fetch("/api/analytics/summary");
         const data = await res.json();
 
-        const users = data.users || [];
-
-        setStats({
-          total: users.length,
-          active: users.filter((u: any) => u.isActive).length,
-          admins: users.filter((u: any) => u.role === "admin").length,
-          customers: users.filter((u: any) => u.role === "customer").length,
-          employees: users.filter((u: any) => u.role === "employee").length,
-        });
+        setStats(data.stats || {});
+        setChartData(data.chart || []);
       } catch (err) {
         console.error("Analytics error:", err);
       } finally {
@@ -513,23 +537,46 @@ export default function AdminDashboard({ activeTab }: Props) {
     }
 
     return (
-      <div className="p-6 text-black space-y-6">
-        <h1 className="text-2xl text-black dark:text-white font-bold">
-          Analytics
-        </h1>
+      <div className="p-6 space-y-6 bg-white dark:bg-slate-800 text-black dark:text-white transition-colors duration-300">
+        <h1 className="text-2xl font-bold">Analytics</h1>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <StatCard label="Total Users" value={stats.total} />
-          <StatCard label="Active Users" value={stats.active} />
-          <StatCard label="Admins" value={stats.admins} />
-          <StatCard label="Customers" value={stats.customers} />
-          <StatCard label="Employees" value={stats.employees} />
+          <StatCard label="Users" value={stats.users.total} />
+          <StatCard label="Products" value={stats.products.total} />
+          <StatCard label="Orders" value={stats.orders.total} />
+          <StatCard
+            label="Revenue"
+            value={stats.orders.revenue}
+            isCurrency={true}
+          />
+        </div>
+
+        {/* Secondary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard label="Low Stock" value={stats.products.lowStock} />
+          <StatCard label="Out of Stock" value={stats.products.outOfStock} />
+          <StatCard label="Pending Orders" value={stats.orders.pending} />
+        </div>
+
+        {/* Alerts */}
+        <div className="space-y-2">
+          {stats.products.outOfStock > 0 && (
+            <div className="bg-red-100 text-red-700 p-3 rounded">
+              {stats.products.outOfStock} products are out of stock
+            </div>
+          )}
+
+          {stats.orders.pending > 0 && (
+            <div className="bg-yellow-100 text-yellow-700 p-3 rounded">
+              {stats.orders.pending} pending orders
+            </div>
+          )}
         </div>
 
         {/* Chart */}
-        <div className="bg-white p-5 rounded-xl shadow">
-          <h2 className="text-lg font-semibold mb-4">Weekly Activity</h2>
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl shadow">
+          <h2 className="text-lg font-semibold mb-4">Revenue / Orders Trend</h2>
 
           <div className="h-[260px] w-full min-w-0">
             <ResponsiveContainer>
@@ -538,7 +585,12 @@ export default function AdminDashboard({ activeTab }: Props) {
                 <XAxis dataKey="day" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="users" strokeWidth={2} />
+
+                {/* Revenue Line */}
+                <Line type="monotone" dataKey="revenue" strokeWidth={2} />
+
+                {/* Orders Line */}
+                <Line type="monotone" dataKey="orders" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -598,44 +650,88 @@ export default function AdminDashboard({ activeTab }: Props) {
     // Submit (Add / Update)
     const handleSubmit = async () => {
       if (!form.name || !form.price) return;
+      const isNew = !editingId;
 
-      const method = editingId ? "PUT" : "POST";
-      const url = editingId ? `/api/products/${editingId}` : `/api/products`;
+      try {
+        const res = await fetch(
+          isNew ? "/api/products" : `/api/products/${editingId}`,
+          {
+            method: isNew ? "POST" : "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...form,
+              price: Number(form.price),
+              quantity: Number(form.quantity),
+            }),
+          }
+        );
 
-      await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          price: Number(form.price),
-          quantity: Number(form.quantity),
-        }),
-      });
+        const data = await res.json();
 
-      // reset
-      setForm({
-        name: "",
-        price: "",
-        quantity: "",
-        image: "",
-        description: "",
-        categoryId: "",
-      });
-      setEditingId(null);
+        if (!res.ok) {
+          throw new Error(data.error || "Request failed");
+        }
 
-      fetchData();
+        // normalize response (handles both POST and PUT)
+        const product = data.product || data;
+
+        if (!product || !product._id) {
+          throw new Error("Invalid product response");
+        }
+        
+        if (isNew) {
+          setProducts((prev) => [product, ...prev]);
+        } else {
+          setProducts((prev) =>
+            prev.map((p) =>
+              p._id === editingId ? product : p
+            )
+          );
+        }
+
+        toast.success(isNew ? "Product added" : "Product updated");
+
+        // reset form
+        setForm({
+          name: "",
+          price: "",
+          quantity: "",
+          image: "",
+          description: "",
+          categoryId: "",
+        });
+
+        setEditingId(null);
+      } catch (err: any) {
+        toast.error(err.message || "Operation failed");
+      }
+
     };
 
     // Delete
     const confirmDelete = async () => {
       if (!deleteId) return;
 
-      await fetch(`/api/products/${deleteId}`, {
-        method: "DELETE",
-      });
+      try {
+        const res = await fetch(`/api/products/${deleteId}`, {
+          method: "DELETE",
+        });
 
-      setDeleteId(null);
-      fetchData();
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error);
+
+        // REMOVE from list
+        setProducts((prev) =>
+          prev.filter((p) => p._id !== deleteId)
+        );
+
+        toast.success("Product deleted");
+        setDeleteId(null);
+      } catch (err: any) {
+        toast.error(err.message || "Delete failed");
+      }
+
     };
 
     const cancelDelete = () => {
@@ -659,7 +755,7 @@ export default function AdminDashboard({ activeTab }: Props) {
     };
 
     return (
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 bg-white dark:bg-slate-800 text-black dark:text-white transition-colors duration-300">
         {/* HEADER */}
         <div className="flex justify-between items-center">
           <h2 className="text-2xl text-black dark:text-white font-bold">
@@ -698,7 +794,7 @@ export default function AdminDashboard({ activeTab }: Props) {
         {/* GRID */}
         {!loading && products.length > 0 && (
           <div className="grid grid-cols-4 gap-4">
-            {products.map((p: Product) => (
+            {products.filter(Boolean).map((p: Product) => (
               <div
                 key={p._id}
                 className="border border-black/10 rounded-xl p-4 bg-white"
@@ -706,10 +802,10 @@ export default function AdminDashboard({ activeTab }: Props) {
                 <div className="h-40 w-full flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                   <img
                     src={
-                      p.image && !p.image.startsWith("blob:")
-                        ? p.image
-                        : "https://via.placeholder.com/150"
-                    }
+                          p?.image && !p.image.startsWith("blob:")
+                            ? p.image
+                            : "https://via.placeholder.com/150"
+                        }
                     className="max-h-full max-w-full object-contain"
                   />
                 </div>
@@ -735,7 +831,7 @@ export default function AdminDashboard({ activeTab }: Props) {
                       );
                       setShowModal(true);
                     }}
-                    className="px-3 py-1 border rounded hover:bg-black hover:text-white"
+                    className="px-3 py-1 border rounded text-black hover:bg-black hover:text-white"
                   >
                     Edit
                   </button>
@@ -744,7 +840,7 @@ export default function AdminDashboard({ activeTab }: Props) {
                     onClick={() => {
                       setDeleteId(String(p._id));
                     }}
-                    className="px-3 py-1 border rounded hover:bg-red-500 hover:text-white"
+                    className="px-3 py-1 border rounded text-black hover:bg-red-500 hover:text-white"
                   >
                     Delete
                   </button>
@@ -778,4 +874,100 @@ export default function AdminDashboard({ activeTab }: Props) {
       </div>
     );
   }
+}
+
+function OrdersSection() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch("/api/orders");
+      const data = await res.json();
+      setOrders(data.orders || []);
+    } catch (err) {
+      console.error("Orders error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-6 text-black">Loading orders...</div>;
+  }
+
+  return (
+    <div className="p-6 space-y-6 bg-white dark:bg-slate-800 text-black dark:text-white transition-colors duration-300">
+      <h1 className="text-2xl text-black dark:text-white font-bold">Orders</h1>
+
+      <div className="bg-white rounded-xl shadow overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead className="border-b">
+            <tr className="text-center bg-black text-white font-semibold tracking-wide">
+              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">Order ID</th>
+              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">Customer</th>
+              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">Products</th>
+              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">Total (₹)</th>
+              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">Status</th>
+              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">Date</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {orders.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="p-4 text-center text-black">
+                  No orders found
+                </td>
+              </tr>
+            ) : (
+              orders.map((order) => (
+                <tr key={order._id} className="border-b">
+                  <td className="p-3">{order._id.slice(-6)}</td>
+
+                  <td className="p-3">
+                    {order.user?.name || "N/A"}
+                  </td>
+
+                  <td className="p-3">
+                    {order.products.map((p, i) => (
+                      <div key={i}>
+                        {p.name} × {p.quantity}
+                      </div>
+                    ))}
+                  </td>
+
+                  <td className="p-3 font-medium">
+                    ₹{order.totalAmount}
+                  </td>
+
+                  <td className="p-3">
+                    <span
+                      className={`px-2 py-1 rounded text-sm ${
+                        order.status === "completed"
+                          ? "bg-green-100 text-green-700"
+                          : order.status === "pending"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {order.status}
+                    </span>
+                  </td>
+
+                  <td className="p-3">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }

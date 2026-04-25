@@ -18,6 +18,7 @@ const menuConfig: Record<string, MenuItem[]> = {
     { label: "Users", icon: Users, key: "users" },
     { label: "Analytics", icon: BarChart3, key: "analytics" },
     { label: "Products", icon: Package, key: "products" },
+    { label: "Orders", icon: ShoppingCart, key: "orders" },
   ],
   customer: [{ label: "My Orders", icon: ShoppingCart, key: "orders" }],
   employee: [{ label: "Tasks", icon: Home, key: "tasks" }],

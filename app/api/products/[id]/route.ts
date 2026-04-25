@@ -60,7 +60,7 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ product: updated });
   } catch (error: any) {
     console.error("PUT /api/products error:", error);
 
