@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, X, Loader2 } from "lucide-react";
 
 type UserType = {
   _id: string;
@@ -11,13 +11,22 @@ type UserType = {
 };
 
 type Props = {
-  user: UserType;
+  user: UserType | null;
   onClose: () => void;
   onSave: (user: UserType) => Promise<void>;
 };
 
 export default function EditUserModal({ user, onClose, onSave }: Props) {
-  const [form, setForm] = useState<UserType>(user);
+  const [form, setForm] = useState<UserType>(
+    user || {
+      _id: "",
+      name: "",
+      email: "",
+      role: "customer",
+      isActive: true,
+      password: "",
+    },
+  );
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{
     name?: string;
@@ -27,7 +36,7 @@ export default function EditUserModal({ user, onClose, onSave }: Props) {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    setForm(user);
+    if (user) setForm(user);
   }, [user]);
 
   // VALIDATION
@@ -57,9 +66,8 @@ export default function EditUserModal({ user, onClose, onSave }: Props) {
   // SUBMIT
   const handleSubmit = async () => {
     if (!validate()) return;
-
+    setLoading(true);
     try {
-      setLoading(true);
       await onSave(form);
     } finally {
       setLoading(false);
@@ -67,141 +75,158 @@ export default function EditUserModal({ user, onClose, onSave }: Props) {
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
       <div
-        className="bg-white w-[420px] rounded-2xl shadow-xl p-6 space-y-5"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* HEADER */}
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-black">
-            {form._id ? "Edit User" : "Add User"}
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Modal Card */}
+      <div className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            {form._id ? "Edit Member" : "Add New Member"}
           </h2>
-          <button onClick={onClose} className="text-black text-xl leading-none">
-            ×
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <X size={20} />
           </button>
         </div>
 
-        {/* FORM */}
-        <div className="space-y-4">
-          {/* NAME */}
+        {/* Form Body */}
+        <div className="p-6 space-y-5">
+          {/* Name Input */}
           <div>
-            <label className="text-sm text-black font-medium">Name</label>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              Full Name
+            </label>
             <input
-              className={`w-full border px-3 py-2 rounded mt-1 text-black ${
-                errors.name ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white transition-all outline-none focus:ring-2
+                ${errors.name ? "border-red-500 focus:ring-red-500/20" : "border-slate-200 dark:border-slate-700 focus:ring-slate-900 dark:focus:ring-white"}`}
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="John Doe"
             />
             {errors.name && (
-              <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+              <p className="text-xs font-medium text-red-500 mt-1.5 ml-1">
+                {errors.name}
+              </p>
             )}
           </div>
 
-          {/* EMAIL */}
+          {/* Email Input */}
           <div>
-            <label className="text-sm text-black font-medium">Email</label>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              Email Address
+            </label>
             <input
-              className={`w-full border px-3 py-2 rounded mt-1 text-black ${
-                errors.email ? "border-red-500" : "border-gray-300"
-              }`}
+              type="email"
+              className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white transition-all outline-none focus:ring-2
+                ${errors.email ? "border-red-500 focus:ring-red-500/20" : "border-slate-200 dark:border-slate-700 focus:ring-slate-900 dark:focus:ring-white"}`}
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="john@example.com"
             />
             {errors.email && (
-              <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+              <p className="text-xs font-medium text-red-500 mt-1.5 ml-1">
+                {errors.email}
+              </p>
             )}
           </div>
 
-          {/* PASSWORD */}
+          {/* Password Input */}
           <div>
-            <label className="text-sm text-black font-medium">Password</label>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              {form._id ? "Update Password" : "Password"}
+            </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                className={`w-full border px-3 py-2 rounded mt-1 text-black ${
-                  errors.password ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full pl-4 pr-12 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white transition-all outline-none focus:ring-2
+                  ${errors.password ? "border-red-500 focus:ring-red-500/20" : "border-slate-200 dark:border-slate-700 focus:ring-slate-900 dark:focus:ring-white"}`}
                 value={form.password ?? ""}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder={
-                  form._id
-                    ? "Leave blank to keep existing password"
-                    : "Enter a password"
-                }
+                placeholder={form._id ? "••••••••" : "Create a password"}
               />
-              {errors.password && (
-                <p className="text-xs text-red-500 mt-1">{errors.password}</p>
-              )}
-
               <button
                 type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 hover:text-black"
-                tabIndex={-1}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-xs font-medium text-red-500 mt-1.5 ml-1">
+                {errors.password}
+              </p>
+            )}
+            {form._id && !errors.password && (
+              <p className="text-[10px] text-slate-400 mt-1 ml-1">
+                Leave empty to keep current password
+              </p>
+            )}
           </div>
 
-          {/* ROLE */}
-          <div>
-            <label className="text-sm text-black font-medium">Role</label>
-            <select
-              className="w-full border border-gray-300 px-3 py-2 rounded mt-1 text-black"
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-            >
-              <option value="admin">Admin</option>
-              <option value="customer">Customer</option>
-              <option value="employee">Employee</option>
-            </select>
-          </div>
+          {/* Role & Status Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                User Role
+              </label>
+              <select
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all appearance-none"
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+              >
+                <option value="admin">Admin</option>
+                <option value="customer">Customer</option>
+                <option value="employee">Employee</option>
+              </select>
+            </div>
 
-          {/* STATUS TOGGLE */}
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-sm text-black font-medium">Status</span>
-
-            <button
-              type="button"
-              onClick={() => setForm({ ...form, isActive: !form.isActive })}
-              className={`w-12 h-6 flex items-center rounded-full p-1 transition ${
-                form.isActive ? "bg-green-600" : "bg-red-600"
-              }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow transform transition ${
-                  form.isActive ? "translate-x-6" : ""
-                }`}
-              />
-            </button>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                Account Status
+              </label>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, isActive: !form.isActive })}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-xs transition-all
+                  ${
+                    form.isActive
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400"
+                      : "bg-red-50 border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400"
+                  }`}
+              >
+                <div
+                  className={`w-2 h-2 rounded-full ${form.isActive ? "bg-emerald-500" : "bg-red-500"}`}
+                />
+                {form.isActive ? "ACTIVE" : "INACTIVE"}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* ACTIONS */}
-        <div className="flex justify-end gap-3 pt-2">
+        {/* Footer Actions */}
+        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded text-black hover:bg-gray-100"
+            className="px-5 py-2 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
           >
             Cancel
           </button>
-
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`px-4 py-2 rounded text-white ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-black hover:bg-gray-800"
-            }`}
+            className="flex items-center gap-2 px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-bold rounded-xl hover:opacity-90 transition-all active:scale-95 disabled:opacity-50"
           >
-            {loading ? "Saving..." : "Save Changes"}
+            {loading && <Loader2 size={16} className="animate-spin" />}
+            {form._id ? "Save Changes" : "Create User"}
           </button>
         </div>
       </div>
