@@ -27,7 +27,18 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  AreaChart,
+  Area,
 } from "recharts";
+
+import {
+  TrendingUp,
+  Users,
+  ShoppingBag,
+  AlertCircle,
+  ArrowUpRight,
+  Clock,
+} from "lucide-react";
 
 type AnalyticsData = {
   users: {
@@ -84,27 +95,46 @@ function Card({ title, value }: { title: string; value: string }) {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  isCurrency = false,
-}: {
-  label: string;
-  value: number;
-  isCurrency?: boolean;
-}) {
-  return (
-    <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
-      <p className="text-sm font-medium text-black dark:text-white">{label}</p>
-      {/* <p className="text-2xl font-bold mt-2 text-black dark:text-white">
-        {value}
-      </p> */}
-      <p className="text-2xl font-bold mt-2 text-black dark:text-white">
-        {isCurrency ? `₹${value.toLocaleString("en-IN")}` : value}
-      </p>
+const StatCard = ({ title, value, icon: Icon, trend }: any) => (
+  <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all hover:shadow-md">
+    <div className="flex justify-between items-start">
+      <div>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          {title}
+        </p>
+        <h3 className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">
+          {value}
+        </h3>
+        {trend && (
+          <div className="flex items-center mt-2 text-xs font-medium text-emerald-600">
+            <ArrowUpRight size={14} className="mr-1" />
+            <span>{trend}% from last month</span>
+          </div>
+        )}
+      </div>
+      <div className="p-3 bg-slate-900 dark:bg-white rounded-xl">
+        <Icon size={20} className="text-white dark:text-slate-900" />
+      </div>
     </div>
-  );
-}
+  </div>
+);
+
+const Skeleton = () => (
+  <div className="p-8 space-y-6 animate-pulse">
+    <div className="grid grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl"
+        />
+      ))}
+    </div>
+    <div className="grid grid-cols-3 gap-4">
+      <div className="col-span-2 h-[400px] bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+      <div className="h-[400px] bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+    </div>
+  </div>
+);
 
 export default function AdminDashboard({ activeTab }: Props) {
   if (activeTab === "users") {
@@ -127,21 +157,10 @@ export default function AdminDashboard({ activeTab }: Props) {
 
   // Overview Section
   function OverviewSection() {
-    const [stats, setStats] = useState({
-      revenue: 0,
-      orders: 0,
-      users: 0,
-      lowStock: 0,
-    });
+  const [data, setData] = useState<any>({ stats: {}, chart: [], activity: [] });
+  const [loading, setLoading] = useState(true);
 
-    const [chartData, setChartData] = useState<any[]>([]);
-    const [activities, setActivities] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-      fetchOverview();
-    }, []);
-
+  useEffect(() => {
     const fetchOverview = async () => {
       try {
         const [oRes, uRes, pRes] = await Promise.all([
@@ -154,139 +173,142 @@ export default function AdminDashboard({ activeTab }: Props) {
         const { users = [] } = await uRes.json();
         const { products = [] } = await pRes.json();
 
-        // ✅ KPI calculations
-        const revenue = orders.reduce(
-          (sum: number, o: any) => sum + (o.totalAmount || 0),
-          0,
-        );
-
+        // Stats Calculation
+        const revenue = orders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0);
         const lowStock = products.filter((p: any) => p.quantity < 5).length;
 
-        setStats({
-          revenue,
-          orders: orders.length,
-          users: users.length,
-          lowStock,
-        });
+        // Chart Data Grouping
+        const grouped = orders.reduce((acc: any, o: any) => {
+          const day = new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+          acc[day] = (acc[day] || 0) + (o.totalAmount || 0);
+          return acc;
+        }, {});
 
-        // ✅ Chart (group by date)
-        const grouped: Record<string, number> = {};
-
-        orders.forEach((o: any) => {
-          const day = new Date(o.createdAt).toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "short",
-          });
-
-          grouped[day] = (grouped[day] || 0) + (o.totalAmount || 0);
-        });
-
-        const formatted = Object.entries(grouped)
+        const chart = Object.entries(grouped)
           .map(([day, sales]) => ({ day, sales }))
-          .sort(
-            (a, b) => new Date(a.day).getTime() - new Date(b.day).getTime(),
-          );
+          .slice(-7); // Last 7 days
 
-        setChartData(formatted);
+        // Activity Feed
+        const activity = [
+          ...orders.slice(0, 3).map((o: any) => ({ type: 'order', text: `Order #...${o.id?.slice(-4)}`, val: `₹${o.totalAmount}`, time: o.createdAt })),
+          ...users.slice(0, 2).map((u: any) => ({ type: 'user', text: `New user: ${u.name}`, val: 'Joined', time: u.createdAt || new Date().toISOString() })),
+        ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
-        // ✅ Activity (ONLY recent items)
-        const recentUsers = users
-          .sort(
-            (a: any, b: any) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          )
-          .slice(0, 3);
-
-        const recentProducts = products
-          .sort(
-            (a: any, b: any) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          )
-          .slice(0, 3);
-
-        const recentOrders = orders
-          .sort(
-            (a: any, b: any) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          )
-          .slice(0, 3);
-
-        const activityData = [
-          ...recentUsers.map((u: any) => ({
-            text: `New user: ${u.name}`,
-            date: u.createdAt,
-          })),
-          ...recentProducts.map((p: any) => ({
-            text: `Product added: ${p.name}`,
-            date: p.createdAt,
-          })),
-          ...recentOrders.map((o: any) => ({
-            text: `Order placed: ₹${o.totalAmount}`,
-            date: o.createdAt,
-          })),
-        ];
-
-        activityData.sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-        );
-
-        setActivities(activityData.slice(0, 5));
+        setData({
+          stats: { revenue, orders: orders.length, users: users.length, lowStock },
+          chart,
+          activity
+        });
       } catch (err) {
-        console.error("Overview fetch error:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    if (loading) {
-      return <div className="p-6 text-black">Loading overview...</div>;
-    }
+    fetchOverview();
+  }, []);
 
-    return (
-      <div className="p-6 space-y-6">
-        {/* KPI */}
-        <div className="grid grid-cols-4 gap-4">
-          <Card title="Total Revenue" value={`₹${stats.revenue}`} />
-          <Card title="Orders" value={stats.orders.toString()} />
-          <Card title="Users" value={stats.users.toString()} />
-          <Card title="Low Stock Items" value={stats.lowStock.toString()} />
+  if (loading) return <Skeleton />;
+
+  return (
+    <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors">
+      
+      <header>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
+        <p className="text-slate-500 text-sm">Real-time performance metrics for your store.</p>
+      </header>
+
+      {/* KPI Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Total Revenue" value={`₹${data.stats.revenue.toLocaleString()}`} icon={TrendingUp} trend={12} />
+        <StatCard title="Total Orders" value={data.stats.orders} icon={ShoppingBag} trend={8} />
+        <StatCard title="Total Users" value={data.stats.users} icon={Users} trend={5} />
+        <StatCard title="Low Stock" value={data.stats.lowStock} icon={AlertCircle} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Revenue Chart */}
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Revenue Trends</h2>
+            <select className="text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-md px-2 py-1 outline-none">
+              <option>Last 7 Days</option>
+              <option>Last 30 Days</option>
+            </select>
+          </div>
+
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data.chart}>
+                <defs>
+                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0f172a" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#0f172a" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="day" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                  tickFormatter={(val) => `₹${val}`}
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="sales" 
+                  stroke="#0f172a" 
+                  strokeWidth={3} 
+                  fillOpacity={1} 
+                  fill="url(#colorSales)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        {/* MAIN */}
-        <div className="grid grid-cols-3 gap-4">
-          {/* CHART */}
-          <div className="col-span-2 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-black/10">
-            <h2 className="text-lg font-semibold mb-4">Revenue Overview</h2>
-
-            <div className="h-[260px] w-full min-w-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="sales" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+        {/* Activity Feed */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Recent Activity</h2>
+          <div className="space-y-6">
+            {data.activity.map((item: any, i: number) => (
+              <div key={i} className="flex items-center gap-4 group">
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+                  <Clock size={16} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                    {item.text}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {item.time && !isNaN(new Date(item.time).getTime()) 
+                      ? new Date(item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : "Just now"}
+                  </p>
+                </div>
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
+                  {item.val}
+                </span>
+              </div>
+            ))}
           </div>
-
-          {/* ACTIVITY */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-black/10">
-            <h2 className="text-lg font-semibold mb-3">Recent Activity</h2>
-
-            <ul className="space-y-3 text-sm">
-              {activities.map((a, i) => (
-                <li key={i} className="border-b pb-2 flex justify-between">
-                  <span>{a.text}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* <button className="w-full mt-8 py-2 text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors border-t border-slate-100 dark:border-slate-800">
+            View All Activity
+          </button> */}
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   function UsersSection() {
     const [users, setUsers] = useState<UserType[]>([]);
