@@ -6,8 +6,6 @@ import {
   Trash2,
   Plus,
   Edit3,
-  Layers,
-  Info,
   Filter,
   ChevronUp,
   ChevronDown,
@@ -20,6 +18,11 @@ import {
   ArrowUpRight,
   ShoppingBag,
   Clock,
+  CheckCircle2,
+  XCircle,
+  CreditCard,
+  MapPin,
+  RefreshCw,
   LucideProps,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -85,14 +88,14 @@ type Category = {
   name: string;
 };
 
-type Order = {
-  _id: string;
-  user?: { name: string };
-  products: { name: string; quantity: number }[];
-  totalAmount: number;
-  status: string;
-  createdAt: string;
-};
+// type Order = {
+//   _id: string;
+//   user?: { name: string };
+//   products: { name: string; quantity: number }[];
+//   totalAmount: number;
+//   status: string;
+//   createdAt: string;
+// };
 
 interface MetricProps {
   label: string;
@@ -106,6 +109,27 @@ interface HealthProps {
   label: string;
   value: number;
   color: "red" | "orange" | "blue";
+}
+
+interface OrderItem {
+  product: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface Order {
+  _id: string;
+  user?: {
+    name: string;
+    email?: string;
+  };
+  items: OrderItem[]; // Matches your schema
+  totalAmount: number;
+  status: "pending" | "processing" | "completed" | "cancelled";
+  paymentStatus: "pending" | "paid" | "failed";
+  address: string;
+  createdAt: string;
 }
 
 function Card({ title, value }: { title: string; value: string }) {
@@ -960,7 +984,10 @@ export default function AdminDashboard({ activeTab }: Props) {
         quantity: String(p.quantity) || "",
         image: p.image || "",
         description: p.description || "",
-        categoryId: (typeof p.categoryId === "object" ? p.categoryId?._id : p.categoryId) || "",
+        categoryId:
+          (typeof p.categoryId === "object"
+            ? p.categoryId?._id
+            : p.categoryId) || "",
       });
       setEditingId(p._id);
       setImagePreview(p.image && !p.image.startsWith("blob:") ? p.image : "");
@@ -1031,11 +1058,11 @@ export default function AdminDashboard({ activeTab }: Props) {
 
         {/* PRODUCT GRID */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="h-80 bg-slate-200 dark:bg-slate-900 rounded-3xl"
+                className="h-[380px] bg-slate-200 dark:bg-slate-900 rounded-[2rem]"
               />
             ))}
           </div>
@@ -1051,37 +1078,51 @@ export default function AdminDashboard({ activeTab }: Props) {
             {products.map((p) => (
               <div
                 key={p._id}
-                className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[2rem] shadow-sm hover:shadow-xl dark:hover:shadow-white/5 transition-all duration-300 hover:-translate-y-1"
+                className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[2rem] shadow-sm hover:shadow-xl dark:hover:shadow-white/5 transition-all duration-300 min-h-[380px] flex flex-col justify-between"
               >
-                {/* IMAGE WRAPPER */}
-                <div className="relative h-48 w-full bg-slate-100 dark:bg-slate-800 rounded-[1.5rem] mb-4 overflow-hidden border border-slate-200/50 dark:border-slate-700/50">
-                  <img
-                    src={
-                      p?.image && !p.image.startsWith("blob:")
-                        ? p.image
-                        : "https://via.placeholder.com/300"
-                    }
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    alt={p.name}
-                  />
-                  <div className="absolute top-3 left-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500 shadow-sm">
-                    {typeof p.categoryId === "object"
-                      ? p.categoryId?.name
-                      : "General"}
+                {/* UPPER WRAPPER (IMAGE + TITLE) */}
+                <div>
+                  {/* IMAGE CONTAINER */}
+                  <div className="relative h-48 w-full bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] mb-4 overflow-hidden border border-slate-200/50 dark:border-slate-700/50 flex items-center justify-center p-3">
+                    <img
+                      src={
+                        p?.image && !p.image.startsWith("blob:")
+                          ? p.image
+                          : "https://via.placeholder.com/300"
+                      }
+                      className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+                      alt={p.name}
+                    />
+                    <div className="absolute top-3 left-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500 shadow-sm">
+                      {typeof p.categoryId === "object"
+                        ? p.categoryId?.name
+                        : "General"}
+                    </div>
+                    {p.quantity === 0 && (
+                      <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-[1px] flex items-center justify-center">
+                        <span className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs px-2.5 py-1 font-bold rounded-full uppercase tracking-wider">
+                          Out of Stock
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* TITLE */}
+                  <div className="px-1">
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white truncate">
+                      {p.name}
+                    </h3>
                   </div>
                 </div>
 
-                {/* DETAILS */}
-                <div className="px-1">
-                  <h3 className="font-bold text-lg text-slate-900 dark:text-white truncate">
-                    {p.name}
-                  </h3>
-                  <div className="flex justify-between items-end mt-2">
+                {/* LOWER WRAPPER (PRICE + INLINE ACTIONS) */}
+                <div className="px-1 mt-4">
+                  <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-2xl font-black text-slate-900 dark:text-white">
+                      <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
                         ₹{p.price}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-1">
+                      <div className="flex items-center gap-1.5 mt-2.5">
                         <span
                           className={`w-2 h-2 rounded-full ${p.quantity < 5 ? "bg-red-500 animate-pulse" : "bg-emerald-500"}`}
                         />
@@ -1093,7 +1134,7 @@ export default function AdminDashboard({ activeTab }: Props) {
                       </div>
                     </div>
 
-                    {/* ACTIONS */}
+                    {/* ACTION FOOTER BUTTONS */}
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEdit(p)}
@@ -1145,15 +1186,12 @@ function OrdersSection() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
   const fetchOrders = async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/orders");
       const data = await res.json();
-      setOrders(data.orders || []);
+      setOrders(data.orders || data || []);
     } catch (err) {
       console.error("Orders error:", err);
     } finally {
@@ -1161,86 +1199,158 @@ function OrdersSection() {
     }
   };
 
-  if (loading) {
-    return <div className="p-6 text-black">Loading orders...</div>;
-  }
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   return (
-    <div className="p-6 space-y-6 bg-white dark:bg-slate-800 text-black dark:text-white transition-colors duration-300">
-      <h1 className="text-2xl text-black dark:text-white font-bold">Orders</h1>
+    <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-all duration-500 text-slate-900 dark:text-white">
+      {/* HEADER */}
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
+            <ShoppingBag
+              className="text-indigo-600 dark:text-indigo-400"
+              size={32}
+            />
+            Orders Management
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Track fulfillment, payments, and shipping logistics.
+          </p>
+        </div>
+        <button
+          onClick={fetchOrders}
+          className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500"
+        >
+          <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+        </button>
+      </div>
 
-      <div className="bg-white rounded-xl shadow overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
-          <thead className="border-b">
-            <tr className="text-center bg-black text-white font-semibold tracking-wide">
-              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">
-                Order ID
-              </th>
-              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">
-                Customer
-              </th>
-              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">
-                Products
-              </th>
-              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">
-                Total (₹)
-              </th>
-              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">
-                Status
-              </th>
-              <th className="py-2 px-3 border-r border-gray-500 last:border-r-0">
-                Date
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {orders.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="p-4 text-center text-black">
-                  No orders found
-                </td>
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest bg-slate-50/50 dark:bg-slate-900/50">
+                <th className="py-5 px-6">Ref ID</th>
+                <th className="py-5 px-6">Customer / Shipping</th>
+                <th className="py-5 px-6">Order Items</th>
+                <th className="py-5 px-6">Finance</th>
+                <th className="py-5 px-6">Fulfillment</th>
+                <th className="py-5 px-6 text-right">Date</th>
               </tr>
-            ) : (
-              orders.map((order) => (
-                <tr key={order._id} className="border-b">
-                  <td className="p-3">{order._id.slice(-6)}</td>
+            </thead>
 
-                  <td className="p-3">{order.user?.name || "N/A"}</td>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+              {!loading &&
+                orders.map((order) => (
+                  <tr
+                    key={order._id}
+                    className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-all"
+                  >
+                    {/* ID */}
+                    <td className="py-6 px-6 align-top">
+                      <span className="font-mono text-[11px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                        {order._id.slice(-6).toUpperCase()}
+                      </span>
+                    </td>
 
-                  <td className="p-3">
-                    {order.products.map((p, i) => (
-                      <div key={i}>
-                        {p.name} × {p.quantity}
+                    {/* CUSTOMER & ADDRESS */}
+                    <td className="py-6 px-6 align-top">
+                      <div className="font-bold text-slate-900 dark:text-white">
+                        {order.user?.name || "Guest User"}
                       </div>
-                    ))}
-                  </td>
+                      <div className="flex items-start gap-1 mt-1 text-slate-500 text-xs italic line-clamp-1">
+                        <MapPin size={12} className="mt-0.5 shrink-0" />
+                        {order.address}
+                      </div>
+                    </td>
 
-                  <td className="p-3 font-medium">₹{order.totalAmount}</td>
+                    {/* ITEMS */}
+                    <td className="py-6 px-6 align-top">
+                      <div className="space-y-2">
+                        {order.items.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 group/item"
+                          >
+                            <Package
+                              size={14}
+                              className="text-slate-300 dark:text-slate-600"
+                            />
+                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                              {item.name}
+                            </span>
+                            <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 rounded">
+                              x{item.quantity}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
 
-                  <td className="p-3">
-                    <span
-                      className={`px-2 py-1 rounded text-sm ${
-                        order.status === "completed"
-                          ? "bg-green-100 text-green-700"
-                          : order.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {order.status}
-                    </span>
-                  </td>
+                    {/* FINANCE (TOTAL & PAYMENT STATUS) */}
+                    <td className="py-6 px-6 align-top">
+                      <div className="font-black text-slate-900 dark:text-white text-base">
+                        ₹{order.totalAmount.toLocaleString()}
+                      </div>
+                      <div
+                        className={`text-[10px] font-bold uppercase mt-1 inline-flex items-center gap-1 ${
+                          order.paymentStatus === "paid"
+                            ? "text-emerald-500"
+                            : "text-rose-500"
+                        }`}
+                      >
+                        <CreditCard size={10} />
+                        {order.paymentStatus}
+                      </div>
+                    </td>
 
-                  <td className="p-3">
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    {/* STATUS */}
+                    <td className="py-6 px-6 align-top">
+                      <StatusPill status={order.status} />
+                    </td>
+
+                    {/* DATE */}
+                    <td className="py-6 px-6 align-top text-right font-medium text-slate-400 text-xs">
+                      {new Date(order.createdAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+
+          {loading && (
+            <div className="p-20 text-center text-slate-400 animate-pulse font-medium italic">
+              Synchronizing with database...
+            </div>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+function StatusPill({ status }: { status: Order["status"] }) {
+  const styles = {
+    pending:
+      "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+    processing:
+      "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+    completed:
+      "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+    cancelled:
+      "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400",
+  };
+
+  return (
+    <span
+      className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border border-transparent ${styles[status]}`}
+    >
+      {status}
+    </span>
   );
 }
