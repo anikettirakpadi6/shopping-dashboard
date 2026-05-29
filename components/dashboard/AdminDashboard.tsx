@@ -1308,7 +1308,52 @@ function OrdersSection() {
 
                     {/* STATUS */}
                     <td className="py-6 px-6 align-top">
-                      <StatusPill status={order.status} />
+                      <div className="flex flex-col gap-3">
+                        <StatusPill status={order.status} />
+
+                        <select
+                          value={order.status}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value as Order["status"];
+
+                            try {
+                              const res = await fetch(`/api/orders/${order._id}`, {
+                                method: "PATCH",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                  status: newStatus,
+                                }),
+                              });
+
+                              const data = await res.json();
+
+                              if (!res.ok) {
+                                throw new Error(data.error);
+                              }
+
+                              toast.success("Order status updated");
+
+                              setOrders((prev) =>
+                                prev.map((o) =>
+                                  o._id === order._id
+                                    ? { ...o, status: newStatus }
+                                    : o
+                                )
+                              );
+                            } catch (err: any) {
+                              toast.error(err.message);
+                            }
+                          }}
+                          className="text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg px-2 py-1 outline-none"
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="processing">Processing</option>
+                          <option value="completed">Completed</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </div>
                     </td>
 
                     {/* DATE */}
@@ -1330,27 +1375,60 @@ function OrdersSection() {
           )}
         </div>
       </div>
+      {orders.length === 0 && (
+        <div className="text-center py-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
+          <CheckCircle2
+            className="mx-auto text-slate-300 dark:text-slate-700 mb-4"
+            size={40}
+          />
+          <h3 className="font-semibold text-slate-900 dark:text-white text-lg">
+            No orders yet
+          </h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            Any purchases you fulfill inside the store tracker will populate
+            logs here.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
 
 function StatusPill({ status }: { status: Order["status"] }) {
-  const styles = {
-    pending:
-      "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-    processing:
-      "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
-    completed:
-      "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
-    cancelled:
-      "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400",
+  const config = {
+    pending: {
+      className:
+        "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+      label: "Pending",
+    },
+
+    processing: {
+      className:
+        "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+      label: "Processing",
+    },
+
+    completed: {
+      className:
+        "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+      label: "Completed",
+    },
+
+    cancelled: {
+      className:
+        "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400",
+      label: "Cancelled",
+    },
   };
+
+  const current = config[status] || config.pending;
 
   return (
     <span
-      className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border border-transparent ${styles[status]}`}
+      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider w-fit ${current.className}`}
     >
-      {status}
+      <span className="h-2 w-2 rounded-full bg-current opacity-70" />
+      {current.label}
     </span>
   );
 }

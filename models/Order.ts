@@ -7,11 +7,48 @@ const OrderItemSchema = new Schema(
       ref: "Product",
       required: true,
     },
-    name: String,        
-    price: Number,       
-    quantity: Number,
+    name: {
+      type: String,
+      required: true,
+    },
+
+    image: {
+      type: String,
+      required: true,
+    },
+
+    price: {
+      type: Number,
+      required: true,
+    },
+
+    quantity: {
+      type: Number,
+      required: true,
+    },
   },
-  { _id: false }
+  { _id: false },
+);
+
+const PaymentSchema = new Schema(
+  {
+    method: {
+      type: String,
+      enum: ["mock", "razorpay", "cod"],
+      default: "mock",
+    },
+
+    transactionId: {
+      type: String,
+      default: null,
+    },
+
+    paidAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  { _id: false },
 );
 
 const OrderSchema = new Schema(
@@ -41,12 +78,26 @@ const OrderSchema = new Schema(
       default: "pending",
     },
 
+    payment: {
+      method: {
+        type: String,
+      },
+
+      transactionId: {
+        type: String,
+      },
+
+      paidAt: {
+        type: Date,
+      },
+    },
+
     address: {
       type: String,
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Order = models.Order || model("Order", OrderSchema);

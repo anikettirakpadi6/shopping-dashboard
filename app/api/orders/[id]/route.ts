@@ -2,19 +2,41 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongoose";
 import Order from "@/models/Order";
 
-export async function PUT(
+export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  await connectToDatabase();
+  try {
+    await connectToDatabase();
 
-  const { status } = await req.json();
+    const { id } = await context.params;
 
-  const order = await Order.findByIdAndUpdate(
-    params.id,
-    { status },
-    { new: true }
-  );
+    const body = await req.json();
 
-  return NextResponse.json({ order });
+    const order = await Order.findByIdAndUpdate(
+      id,
+      {
+        status: body.status,
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!order) {
+      return NextResponse.json(
+        { error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ order });
+  } catch (err) {
+    console.error(err);
+
+    return NextResponse.json(
+      { error: "Server error" },
+      { status: 500 }
+    );
+  }
 }
