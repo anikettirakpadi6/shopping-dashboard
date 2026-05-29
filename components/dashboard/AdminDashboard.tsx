@@ -19,7 +19,7 @@ import {
   ShoppingBag,
   Clock,
   CheckCircle2,
-  XCircle,
+  LayoutDashboard,
   CreditCard,
   MapPin,
   RefreshCw,
@@ -132,18 +132,18 @@ interface Order {
   createdAt: string;
 }
 
-function Card({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
-      <h2 className="text-sm font-medium text-black dark:text-white">
-        {title}
-      </h2>
-      <p className="text-2xl font-bold mt-2 text-black dark:text-white">
-        {value}
-      </p>
-    </div>
-  );
-}
+// function Card({ title, value }: { title: string; value: string }) {
+//   return (
+//     <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
+//       <h2 className="text-sm font-medium text-black dark:text-white">
+//         {title}
+//       </h2>
+//       <p className="text-2xl font-bold mt-2 text-black dark:text-white">
+//         {value}
+//       </p>
+//     </div>
+//   );
+// }
 
 const StatCard = ({ title, value, icon: Icon, trend }: any) => (
   <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all hover:shadow-md">
@@ -290,11 +290,21 @@ export default function AdminDashboard({ activeTab }: Props) {
 
     return (
       <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors">
-        <header>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Dashboard Overview
-          </h1>
-          {/* <p className="text-slate-500 text-sm">Real-time performance metrics for your store.</p> */}
+        <header className="flex items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+          {/* ICON WRAPPER */}
+          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
+            <LayoutDashboard size={24} strokeWidth={2} />
+          </div>
+
+          {/* TEXT CONTENT */}
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Dashboard Overview
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+              Real-time performance metrics, operational updates, and store insights.
+            </p>
+          </div>
         </header>
 
         {/* KPI Section */}
@@ -544,12 +554,22 @@ export default function AdminDashboard({ activeTab }: Props) {
       <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+          {/* ICON WRAPPER */}
+          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
+            <Users size={24} strokeWidth={2} />
+          </div>
+
+          {/* TEXT CONTENT */}
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               User Management
             </h1>
-            {/* <p className="text-slate-500 text-sm">Manage permissions and view member activity.</p> */}
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+              Manage team permissions, invite new members, and monitor user activity.
+            </p>
           </div>
+        </div>
           <button
             onClick={handleOpenAddModal}
             className="flex items-center justify-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-5 py-2.5 rounded-xl font-semibold hover:opacity-90 transition-all active:scale-95 shadow-sm"
@@ -761,16 +781,23 @@ export default function AdminDashboard({ activeTab }: Props) {
 
     return (
       <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-500">
-        {/* Header logic same as before... */}
         <div className="flex items-center justify-between">
+          <div className="flex items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+          {/* ICON WRAPPER */}
+          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
+            <TrendingUp size={24} strokeWidth={2} />
+          </div>
+
+          {/* TEXT CONTENT */}
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Analytics
             </h1>
-            {/* <p className="text-slate-500 text-sm mt-1">
-              Real-time performance metrics.
-            </p> */}
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+              Monitor real-time performance metrics, audience conversion rates, and behavioral data.
+            </p>
           </div>
+        </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1025,14 +1052,21 @@ export default function AdminDashboard({ activeTab }: Props) {
       <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-all duration-500">
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-              {/* <Package className="text-blue-600" size={32} /> */}
-              Inventory
-            </h2>
-            {/* <p className="text-slate-500 text-sm mt-1">
-              Manage your products and stock levels.
-            </p> */}
+          <div className="flex items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+            {/* ICON WRAPPER */}
+            <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
+              <Package size={24} strokeWidth={2} />
+            </div>
+
+            {/* TEXT CONTENT */}
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Inventory
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+                Manage your products, track variant SKUs, and monitor real-time stock levels.
+              </p>
+            </div>
           </div>
 
           <button
@@ -1207,18 +1241,22 @@ function OrdersSection() {
     <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-all duration-500 text-slate-900 dark:text-white">
       {/* HEADER */}
       <div className="flex justify-between items-end">
+        <div className="flex items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+        {/* ICON WRAPPER */}
+        <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
+          <ShoppingBag size={24} strokeWidth={2} />
+        </div>
+
+        {/* TEXT CONTENT */}
         <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            <ShoppingBag
-              className="text-indigo-600 dark:text-indigo-400"
-              size={32}
-            />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Orders Management
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Track fulfillment, payments, and shipping logistics.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+            Track fulfillment states, clear incoming payments, and orchestrate shipping logistics.
           </p>
         </div>
+      </div>
         <button
           onClick={fetchOrders}
           className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500"
