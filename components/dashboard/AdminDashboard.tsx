@@ -252,7 +252,7 @@ export default function AdminDashboard({ activeTab }: Props) {
           const activity = [
             ...orders.slice(0, 3).map((o: any) => ({
               type: "order",
-              text: `Order #...${o.id?.slice(-4)}`,
+              text: `Order #...${o._id?.slice(-4)}`,
               val: `₹${o.totalAmount}`,
               time: o.createdAt,
             })),
@@ -302,7 +302,8 @@ export default function AdminDashboard({ activeTab }: Props) {
               Dashboard Overview
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
-              Real-time performance metrics, operational updates, and store insights.
+              Real-time performance metrics, operational updates, and store
+              insights.
             </p>
           </div>
         </header>
@@ -555,21 +556,22 @@ export default function AdminDashboard({ activeTab }: Props) {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-          {/* ICON WRAPPER */}
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
-            <Users size={24} strokeWidth={2} />
-          </div>
+            {/* ICON WRAPPER */}
+            <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
+              <Users size={24} strokeWidth={2} />
+            </div>
 
-          {/* TEXT CONTENT */}
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              User Management
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
-              Manage team permissions, invite new members, and monitor user activity.
-            </p>
+            {/* TEXT CONTENT */}
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                User Management
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+                Manage team permissions, invite new members, and monitor user
+                activity.
+              </p>
+            </div>
           </div>
-        </div>
           <button
             onClick={handleOpenAddModal}
             className="flex items-center justify-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-5 py-2.5 rounded-xl font-semibold hover:opacity-90 transition-all active:scale-95 shadow-sm"
@@ -596,9 +598,9 @@ export default function AdminDashboard({ activeTab }: Props) {
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
               />
             </div>
-            <button className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+            {/* <button className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
               <Filter size={18} />
-            </button>
+            </button> */}
           </div>
 
           <table className="w-full text-left border-collapse">
@@ -657,9 +659,7 @@ export default function AdminDashboard({ activeTab }: Props) {
                     ${
                       user.role === "admin"
                         ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-                        : user.role === "employee"
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                          : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                        : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
                     }`}
                         >
                           {user.role}
@@ -708,7 +708,7 @@ export default function AdminDashboard({ activeTab }: Props) {
                 _id: "",
                 name: "",
                 email: "",
-                role: "employee",
+                role: "customer",
                 isActive: true,
               }
             }
@@ -783,21 +783,22 @@ export default function AdminDashboard({ activeTab }: Props) {
       <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-500">
         <div className="flex items-center justify-between">
           <div className="flex items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-          {/* ICON WRAPPER */}
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
-            <TrendingUp size={24} strokeWidth={2} />
-          </div>
+            {/* ICON WRAPPER */}
+            <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
+              <TrendingUp size={24} strokeWidth={2} />
+            </div>
 
-          {/* TEXT CONTENT */}
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Analytics
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
-              Monitor real-time performance metrics, audience conversion rates, and behavioral data.
-            </p>
+            {/* TEXT CONTENT */}
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Analytics
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+                Monitor real-time performance metrics, audience conversion
+                rates, and behavioral data.
+              </p>
+            </div>
           </div>
-        </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -957,8 +958,8 @@ export default function AdminDashboard({ activeTab }: Props) {
         const pData = await pRes.json();
         const cData = await cRes.json();
 
-        setProducts(pData);
-        setCategories(cData);
+        setProducts(pData.products || []);
+        setCategories(cData.categories || cData || []);
       } catch (err) {
         console.error("Fetch error:", err);
       }
@@ -1064,7 +1065,8 @@ export default function AdminDashboard({ activeTab }: Props) {
                 Inventory
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
-                Manage your products, track variant SKUs, and monitor real-time stock levels.
+                Manage your products, track variant SKUs, and monitor real-time
+                stock levels.
               </p>
             </div>
           </div>
@@ -1242,21 +1244,22 @@ function OrdersSection() {
       {/* HEADER */}
       <div className="flex justify-between items-end">
         <div className="flex items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-        {/* ICON WRAPPER */}
-        <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
-          <ShoppingBag size={24} strokeWidth={2} />
-        </div>
+          {/* ICON WRAPPER */}
+          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
+            <ShoppingBag size={24} strokeWidth={2} />
+          </div>
 
-        {/* TEXT CONTENT */}
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Orders Management
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
-            Track fulfillment states, clear incoming payments, and orchestrate shipping logistics.
-          </p>
+          {/* TEXT CONTENT */}
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Orders Management
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+              Track fulfillment states, clear incoming payments, and orchestrate
+              shipping logistics.
+            </p>
+          </div>
         </div>
-      </div>
         <button
           onClick={fetchOrders}
           className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500"
@@ -1355,15 +1358,18 @@ function OrdersSection() {
                             const newStatus = e.target.value as Order["status"];
 
                             try {
-                              const res = await fetch(`/api/orders/${order._id}`, {
-                                method: "PATCH",
-                                headers: {
-                                  "Content-Type": "application/json",
+                              const res = await fetch(
+                                `/api/orders/${order._id}`,
+                                {
+                                  method: "PATCH",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    status: newStatus,
+                                  }),
                                 },
-                                body: JSON.stringify({
-                                  status: newStatus,
-                                }),
-                              });
+                              );
 
                               const data = await res.json();
 
@@ -1377,8 +1383,8 @@ function OrdersSection() {
                                 prev.map((o) =>
                                   o._id === order._id
                                     ? { ...o, status: newStatus }
-                                    : o
-                                )
+                                    : o,
+                                ),
                               );
                             } catch (err: any) {
                               toast.error(err.message);

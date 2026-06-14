@@ -185,7 +185,7 @@ export default function EditUserModal({ user, onClose, onSave }: Props) {
               >
                 <option value="admin">Admin</option>
                 <option value="customer">Customer</option>
-                <option value="employee">Employee</option>
+                {/* <option value="employee">Employee</option> */}
               </select>
             </div>
 

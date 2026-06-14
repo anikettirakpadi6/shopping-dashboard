@@ -1,12 +1,18 @@
 import { connectToDatabase } from "@/lib/mongoose";
 import Product from "@/models/Product";
+import Category from "@/models/Category";
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 
 export async function GET() {
   await connectToDatabase();
-  const products = await Product.find().lean();
-  return NextResponse.json(products);
+
+  const products = await Product.find({})
+    .populate("categoryId");
+
+  return Response.json({
+    products,
+  });
 }
 
 export async function POST(req: NextRequest) {

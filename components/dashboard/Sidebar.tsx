@@ -15,7 +15,7 @@ interface MenuItem {
   icon: LucideIcon;
 }
 
-type UserRole = "admin" | "customer" | "employee";
+type UserRole = "admin" | "customer";
 
 interface SidebarProps {
   role: string;
@@ -36,7 +36,7 @@ const MENU_CONFIG: Record<UserRole, MenuItem[]> = {
     { label: "Shop Products", icon: Package, key: "shop" },
     { label: "My Orders", icon: ShoppingCart, key: "orders" },
   ],
-  employee: [{ label: "My Tasks", icon: CheckSquare, key: "tasks" }],
+  // employee: [{ label: "My Tasks", icon: CheckSquare, key: "tasks" }],
 };
 
 export default function Sidebar({

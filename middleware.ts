@@ -9,8 +9,8 @@ export default withAuth(function middleware(_req: NextRequestWithAuth) {}, {
       if (!token) return false;
 
       if (path.startsWith("/admin")) return token.role === "admin";
-      if (path.startsWith("/employee"))
-        return token.role === "employee" || token.role === "admin";
+      // if (path.startsWith("/employee"))
+      //   return token.role === "employee" || token.role === "admin";
       if (path.startsWith("/customer"))
         return token.role === "customer" || token.role === "admin";
 
@@ -20,5 +20,5 @@ export default withAuth(function middleware(_req: NextRequestWithAuth) {}, {
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/employee/:path*", "/customer/:path*"],
+  matcher: ["/admin/:path*", "/customer/:path*"],
 };

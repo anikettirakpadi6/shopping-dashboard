@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import CustomerDashboard from "@/components/dashboard/CustomerDashboard";
-import EmployeeDashboard from "@/components/dashboard/EmployeeDashboard";
+// import EmployeeDashboard from "@/components/dashboard/EmployeeDashboard";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -43,8 +43,8 @@ export default function DashboardPage() {
     case "customer":
       content = <CustomerDashboard activeTab={activeTab} />;
       break;
-    case "employee":
-      content = <EmployeeDashboard activeTab={activeTab} />;
+    // case "employee":
+    //   content = <EmployeeDashboard activeTab={activeTab} />;
       break;
     default:
       content = <div>Invalid Role!</div>;
