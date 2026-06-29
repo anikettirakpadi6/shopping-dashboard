@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useShop } from "@/app/hooks/useShop";
 import { ShoppingCartDrawer } from "../ShoppingCartDrawer";
 import { CheckoutModal } from "../CheckoutModal";
 import { OrderCard } from "../OrderCard";
+import {
+  useSearchParams,
+  useRouter,
+  usePathname,
+} from "next/navigation";
 import {
   ShoppingBag,
   Sparkles,
@@ -22,7 +27,7 @@ export default function CustomerDashboard({ activeTab }: Props) {
   return (
     <div className="p-4 sm:p-6 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {activeTab === "shop" && <ShopSection />}
+        {activeTab === "products" && <ShopSection />}
         {activeTab === "orders" && <OrdersSection />}
       </div>
     </div>
@@ -52,6 +57,33 @@ function ShopSection() {
     categories,
     filteredProducts,
   } = useShop();
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const selectedId = searchParams.get("id");
+
+  const productRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!selectedId) return;
+
+    const el = productRefs.current[selectedId];
+
+    if (!el) return;
+
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    const timer = setTimeout(() => {
+      router.replace(`${pathname}?tab=products`);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [selectedId, filteredProducts]);
 
   return (
   <div className="space-y-6 animate-in fade-in duration-300">
@@ -148,7 +180,18 @@ function ShopSection() {
           return (
             <div
               key={p._id}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm hover:shadow-md transition-all duration-200"
+              ref={(el) => {
+                productRefs.current[p._id] = el;
+              }}
+              className={`
+                group relative flex flex-col overflow-hidden rounded-2xl
+                p-4 shadow-sm hover:shadow-md transition-all duration-500
+                ${
+                  selectedId === p._id
+                    ? "ring-4 ring-blue-500 bg-blue-50 dark:bg-slate-800 scale-[1.02]"
+                    : "border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                }
+              `}
             >
               {/* Image Wrap Container */}
               <div className="aspect-square w-full flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-xl mb-4 overflow-hidden p-3 relative">

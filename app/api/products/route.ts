@@ -5,14 +5,26 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 
 export async function GET() {
-  await connectToDatabase();
+  try {
+    await connectToDatabase();
 
-  const products = await Product.find({})
-    .populate("categoryId");
+    const products = await Product.find().populate("categoryId");
 
-  return Response.json({
-    products,
-  });
+    return Response.json({
+      products,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return Response.json(
+      {
+        error: "Failed to fetch products",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {

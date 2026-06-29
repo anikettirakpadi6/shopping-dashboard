@@ -2,9 +2,27 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Sun, Moon, Search, Bell, ChevronDown } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Search,
+  X,
+  ChevronDown,
+  Package,
+  Users,
+  ShoppingBag,
+  Tag,
+} from "lucide-react";
+import { useGlobalSearch } from "@/app/hooks/useGlobalSearch";
+import { useRouter } from "next/navigation";
 
-export default function Header() {
+type Props = {
+    activeTab: string;
+};
+
+export default function Header({
+  activeTab,
+}: Props) {
   const { data: session } = useSession();
   const userName = session?.user?.name || "User";
   const userEmail = session?.user?.email || "user@example.com";
@@ -14,6 +32,20 @@ export default function Header() {
 
   const [darkMode, setDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const isAdmin = session?.user.role === "admin";
+
+  const router = useRouter();
+
+  const {
+      search,
+      setSearch,
+      results,
+      loading,
+  } = useGlobalSearch(
+      session?.user.role ?? "",
+      activeTab,
+      session?.user.id
+  );
 
   // Sync theme with document class
   useEffect(() => {
@@ -45,11 +77,104 @@ export default function Header() {
         <input
           type="text"
           placeholder="Search products, orders..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl 
           text-slate-900 dark:text-white placeholder:text-slate-400
           focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slatfocus:border-transparent
           transition-all duration-200"
         />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full
+            text-slate-400 hover:text-slate-700 dark:hover:text-white
+            hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+          >
+            <X size={16} />
+          </button>
+        )}
+        {search.trim() && (
+          <div className="absolute mt-2 w-full rounded-xl border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-xl max-h-96 overflow-y-auto z-50">
+            {loading && (
+              <div className="p-4 text-sm text-slate-500">Searching...</div>
+            )}
+
+            {!loading && (
+              <>
+                {results.products.length > 0 && (
+                  <>
+                    <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase">
+                      Products
+                    </div>
+
+                    {results.products.map((p: any) => (
+                      <button
+                        key={p._id}
+                        onClick={() =>
+                          router.push(`/dashboard?tab=products&id=${p._id}`)
+                        }
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"
+                      >
+                        <Package size={16} />
+                        {p.name}
+                      </button>
+                    ))}
+                  </>
+                )}
+                {isAdmin && results.users.length > 0 && (
+                  <>
+                    <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase">
+                      Users
+                    </div>
+
+                    {results.users.map((u: any) => (
+                      <button
+                        key={u._id}
+                        onClick={() =>
+                          router.push(`/dashboard?tab=users&id=${u._id}`)
+                        }
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"
+                      >
+                        <Users size={16} />
+                        {u.name}
+                      </button>
+                    ))}
+                  </>
+                )}
+                {results.orders.length > 0 && (
+                  <>
+                    <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase">
+                      Orders
+                    </div>
+
+                    {results.orders.map((o: any) => (
+                      <button
+                        key={o._id}
+                        onClick={() =>
+                          router.push(`/dashboard?tab=orders&id=${o._id}`)
+                        }
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"
+                      >
+                        <ShoppingBag size={16} />#{o._id.slice(-6)}
+                      </button>
+                    ))}
+                  </>
+                )}
+                {!loading &&
+                  results.products.length === 0 &&
+                  results.users.length === 0 &&
+                  results.orders.length === 0 &&
+                  results.categories.length === 0 && (
+                    <div className="p-4 text-sm text-slate-500">
+                      No results found.
+                    </div>
+                  )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right Section: Actions & Profile */}

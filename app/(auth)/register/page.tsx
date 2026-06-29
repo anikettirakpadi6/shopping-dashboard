@@ -3,7 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Loader2, User, Mail, Lock } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  User,
+  Mail,
+  Lock,
+  ShoppingCart,
+} from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -39,7 +47,9 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Something went wrong. Please try again.");
+        throw new Error(
+          data.error || "Something went wrong. Please try again.",
+        );
       }
 
       // Redirect to login after successful registration
@@ -52,16 +62,27 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-        
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-12 sm:px-6 lg:px-8">
+      <div
+        className="w-full max-w-md space-y-8 bg-white/90 backdrop-blur-xl
+  p-8 rounded-3xl shadow-2xl border border-slate-200"
+      >
         {/* Header */}
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-            Create an account
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Join us today and get access to exclusive offers.
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 shadow-lg">
+            <ShoppingCart className="text-white" size={30} />
+          </div>
+
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            ShopStack
+          </h1>
+
+          <p className="mt-2 text-slate-500 text-sm uppercase tracking-[0.2em]">
+            Modern E-Commerce Platform
+          </p>
+
+          <p className="mt-3 text-sm text-slate-600">
+            Create your account and start shopping with confidence.
           </p>
         </div>
 
@@ -158,13 +179,24 @@ export default function RegisterPage() {
           </button>
 
           {/* Footer Link */}
-          <p className="text-sm text-center text-slate-600 mt-4">
-            Already have an account?{" "}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+
+            <div className="relative flex justify-center">
+              <span className="bg-white px-3 text-xs text-slate-400 uppercase tracking-widest">
+                Already have an account?
+              </span>
+            </div>
+          </div>
+
+          <p className="text-center">
             <Link
               href="/login"
               className="text-indigo-600 font-semibold hover:text-indigo-500 hover:underline transition-colors"
             >
-              Login here
+              Sign In
             </Link>
           </p>
         </form>

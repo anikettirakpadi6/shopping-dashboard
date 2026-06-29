@@ -16,7 +16,13 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const activeTab = searchParams.get("tab") || "overview";
+  const defaultTab =
+    session?.user.role === "customer"
+      ? "products"
+      : "overview";
+
+  const activeTab =
+    searchParams.get("tab") || defaultTab;
 
   useEffect(() => {
     if (status === "unauthenticated") {

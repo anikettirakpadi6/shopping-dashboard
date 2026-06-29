@@ -7,7 +7,11 @@ import {
   LogOut,
   CheckSquare,
   LucideIcon,
+  TriangleAlert,
 } from "lucide-react";
+
+import { useState } from "react";
+import { signOut } from "next-auth/react";
 
 interface MenuItem {
   label: string;
@@ -33,7 +37,7 @@ const MENU_CONFIG: Record<UserRole, MenuItem[]> = {
     { label: "Orders", icon: ShoppingCart, key: "orders" },
   ],
   customer: [
-    { label: "Shop Products", icon: Package, key: "shop" },
+    { label: "Shop Products", icon: Package, key: "products" },
     { label: "My Orders", icon: ShoppingCart, key: "orders" },
   ],
   // employee: [{ label: "My Tasks", icon: CheckSquare, key: "tasks" }],
@@ -47,9 +51,23 @@ export default function Sidebar({
 }: SidebarProps) {
   const normalizedRole = (role?.toLowerCase() || "customer") as UserRole;
   const menuItems = MENU_CONFIG[normalizedRole] || [];
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   return (
-    <aside className="flex flex-col w-64 h-screen px-5 py-8 overflow-y-auto bg-white border-r dark:bg-slate-900 dark:border-slate-800 transition-colors duration-300">
+    <aside
+      className="
+        fixed left-0 top-0
+        flex flex-col
+        w-64 h-screen
+        px-5 py-8
+        bg-white
+        border-r
+        dark:bg-slate-900
+        dark:border-slate-800
+        transition-colors
+        duration-300
+      "
+    >
       {/* Brand Section */}
       <div className="flex items-center gap-3 px-2 mb-10">
         <div className="w-9 h-9 bg-slate-900 dark:bg-white rounded-xl flex items-center justify-center transition-colors">
@@ -87,27 +105,59 @@ export default function Sidebar({
       </nav>
 
       {/* Footer / Logout */}
-      {/* <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
+      <div className="pt-5 mt-5 border-t border-slate-200 dark:border-slate-800">
         <button
-          onClick={onLogout}
-          className="group flex items-center gap-3 px-4 py-3 w-full rounded-xl text-slate-500 font-semibold
-            hover:bg-red-600 hover:text-white transition-all duration-200 active:scale-95"
+          onClick={() => setShowLogoutModal(true)}
+          className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl
+          text-red-600 hover:bg-red-600 hover:text-white transition-all duration-200"
         >
           <LogOut
             size={20}
             className="group-hover:-translate-x-1 transition-transform"
           />
-          <span>Logout</span>
+          <span className="font-semibold">Logout</span>
         </button>
+      </div>
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl p-6">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center">
+                <TriangleAlert className="text-red-600" size={28} />
+              </div>
+            </div>
 
-         <div className="mt-4 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
-          <div className="overflow-hidden">
-            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">User Name</p>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest">{normalizedRole}</p>
+            <h2 className="text-xl font-bold text-center text-slate-900 dark:text-white">
+              Logout?
+            </h2>
+
+            <p className="mt-2 text-center text-slate-500">
+              Are you sure you want to logout?
+            </p>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-2 rounded-xl border border-slate-300 dark:border-slate-700
+          hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() =>
+                  signOut({
+                    callbackUrl: "/login",
+                  })
+                }
+                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold"
+              >
+                Logout
+              </button>
+            </div>
           </div>
-        </div> 
-      </div> */}
+        </div>
+      )}
     </aside>
   );
 }

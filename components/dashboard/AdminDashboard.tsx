@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   Search,
   UserPlus,
@@ -6,44 +6,37 @@ import {
   Trash2,
   Plus,
   Edit3,
-  Filter,
   ChevronUp,
   ChevronDown,
   Users,
   Package,
   ShoppingCart,
   IndianRupee,
-  AlertCircle,
   TrendingUp,
-  ArrowUpRight,
   ShoppingBag,
-  Clock,
   CheckCircle2,
-  LayoutDashboard,
   CreditCard,
   MapPin,
   RefreshCw,
   LucideProps,
 } from "lucide-react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import EditUserModal from "@/components/AddEditUserModal";
 import ProductModal from "@/components/ProductModal";
 import DeleteConfirm from "@/components/DeleteConfirm";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  AreaChart,
-  Area,
-} from "recharts";
+import { useOverviewData } from "@/app/hooks/useOverviewData";
+import Skeleton from "@/components/dashboard/shared/Skeleton";
+import StatsGrid from "./overview/StatsGrid";
+import RevenueChart from "@/components/dashboard/overview/RevenueChart";
+import ActivityFeed from "@/components/dashboard/overview/ActivityFeed";
+import { DashboardHeader } from "./overview/DashboardHeader";
+import { ResponsiveContainer, AreaChart, Area } from "recharts";
 
 type Props = {
   activeTab: string;
   isCurrency?: boolean;
+  search?: string;
 };
 
 type UserType = {
@@ -54,24 +47,6 @@ type UserType = {
   isActive: boolean;
   password?: string;
 };
-
-// type AnalyticsData = {
-//   users: {
-//     total: number;
-//     active: number;
-//   };
-//   products: {
-//     total: number;
-//     lowStock: number;
-//     outOfStock: number;
-//   };
-//   orders: {
-//     total: number;
-//     revenue: number;
-//     pending: number;
-//     completed: number;
-//   };
-// };
 
 type Product = {
   _id: string;
@@ -87,15 +62,6 @@ type Category = {
   _id: string;
   name: string;
 };
-
-// type Order = {
-//   _id: string;
-//   user?: { name: string };
-//   products: { name: string; quantity: number }[];
-//   totalAmount: number;
-//   status: string;
-//   createdAt: string;
-// };
 
 interface MetricProps {
   label: string;
@@ -132,61 +98,7 @@ interface Order {
   createdAt: string;
 }
 
-// function Card({ title, value }: { title: string; value: string }) {
-//   return (
-//     <div className="bg-white dark:bg-slate-900 dark:border-slate-700 p-5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm hover:shadow-md transition-colors duration-300">
-//       <h2 className="text-sm font-medium text-black dark:text-white">
-//         {title}
-//       </h2>
-//       <p className="text-2xl font-bold mt-2 text-black dark:text-white">
-//         {value}
-//       </p>
-//     </div>
-//   );
-// }
-
-const StatCard = ({ title, value, icon: Icon, trend }: any) => (
-  <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all hover:shadow-md">
-    <div className="flex justify-between items-start">
-      <div>
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          {title}
-        </p>
-        <h3 className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">
-          {value}
-        </h3>
-        {trend && (
-          <div className="flex items-center mt-2 text-xs font-medium text-emerald-600">
-            <ArrowUpRight size={14} className="mr-1" />
-            <span>{trend}% from last month</span>
-          </div>
-        )}
-      </div>
-      <div className="p-3 bg-slate-900 dark:bg-white rounded-xl">
-        <Icon size={20} className="text-white dark:text-slate-900" />
-      </div>
-    </div>
-  </div>
-);
-
-const Skeleton = () => (
-  <div className="p-8 space-y-6 animate-pulse">
-    <div className="grid grid-cols-4 gap-4">
-      {[1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl"
-        />
-      ))}
-    </div>
-    <div className="grid grid-cols-3 gap-4">
-      <div className="col-span-2 h-[400px] bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-      <div className="h-[400px] bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-    </div>
-  </div>
-);
-
-export default function AdminDashboard({ activeTab }: Props) {
+export default function AdminDashboard({ activeTab, search }: Props) {
   if (activeTab === "users") {
     return <UsersSection />;
   }
@@ -207,226 +119,23 @@ export default function AdminDashboard({ activeTab }: Props) {
 
   // Overview Section
   function OverviewSection() {
-    const [data, setData] = useState<any>({
-      stats: {},
-      chart: [],
-      activity: [],
-    });
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-      const fetchOverview = async () => {
-        try {
-          const [oRes, uRes, pRes] = await Promise.all([
-            fetch("/api/orders"),
-            fetch("/api/users"),
-            fetch("/api/products"),
-          ]);
-
-          const { orders = [] } = await oRes.json();
-          const { users = [] } = await uRes.json();
-          const { products = [] } = await pRes.json();
-
-          // Stats Calculation
-          const revenue = orders.reduce(
-            (sum: number, o: any) => sum + (o.totalAmount || 0),
-            0,
-          );
-          const lowStock = products.filter((p: any) => p.quantity < 5).length;
-
-          // Chart Data Grouping
-          const grouped = orders.reduce((acc: any, o: any) => {
-            const day = new Date(o.createdAt).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-            });
-            acc[day] = (acc[day] || 0) + (o.totalAmount || 0);
-            return acc;
-          }, {});
-
-          const chart = Object.entries(grouped)
-            .map(([day, sales]) => ({ day, sales }))
-            .slice(-7); // Last 7 days
-
-          // Activity Feed
-          const activity = [
-            ...orders.slice(0, 3).map((o: any) => ({
-              type: "order",
-              text: `Order #...${o._id?.slice(-4)}`,
-              val: `₹${o.totalAmount}`,
-              time: o.createdAt,
-            })),
-            ...users.slice(0, 2).map((u: any) => ({
-              type: "user",
-              text: `New user: ${u.name}`,
-              val: "Joined",
-              time: u.createdAt || new Date().toISOString(),
-            })),
-          ].sort(
-            (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime(),
-          );
-
-          setData({
-            stats: {
-              revenue,
-              orders: orders.length,
-              users: users.length,
-              lowStock,
-            },
-            chart,
-            activity,
-          });
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchOverview();
-    }, []);
+    const { data, loading } = useOverviewData();
 
     if (loading) return <Skeleton />;
 
     return (
-      <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors">
-        <header className="flex items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-          {/* ICON WRAPPER */}
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 mt-0.5">
-            <LayoutDashboard size={24} strokeWidth={2} />
-          </div>
+      <div className="p-8 space-y-8">
+        <DashboardHeader />
 
-          {/* TEXT CONTENT */}
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Dashboard Overview
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
-              Real-time performance metrics, operational updates, and store
-              insights.
-            </p>
-          </div>
-        </header>
-
-        {/* KPI Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Total Revenue"
-            value={`₹${data.stats.revenue.toLocaleString()}`}
-            icon={TrendingUp}
-            trend={12}
-          />
-          <StatCard
-            title="Total Orders"
-            value={data.stats.orders}
-            icon={ShoppingBag}
-            trend={8}
-          />
-          <StatCard
-            title="Total Users"
-            value={data.stats.users}
-            icon={Users}
-            trend={5}
-          />
-          <StatCard
-            title="Low Stock"
-            value={data.stats.lowStock}
-            icon={AlertCircle}
-          />
-        </div>
+        <StatsGrid stats={data.stats} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Revenue Chart */}
           <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                Revenue Trends
-              </h2>
-              <select className="text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-md px-2 py-1 outline-none">
-                <option>Last 7 Days</option>
-                <option>Last 30 Days</option>
-              </select>
-            </div>
-
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.chart}>
-                  <defs>
-                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0f172a" stopOpacity={0.1} />
-                      <stop offset="95%" stopColor="#0f172a" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#e2e8f0"
-                  />
-                  <XAxis
-                    dataKey="day"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#94a3b8", fontSize: 12 }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#94a3b8", fontSize: 12 }}
-                    tickFormatter={(val) => `₹${val}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "none",
-                      boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="sales"
-                    stroke="#0f172a"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorSales)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            <RevenueChart chart={data.chart} />
           </div>
 
-          {/* Activity Feed */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-6">
-              Recent Activity
-            </h2>
-            <div className="space-y-6">
-              {data.activity.map((item: any, i: number) => (
-                <div key={i} className="flex items-center gap-4 group">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
-                    <Clock size={16} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                      {item.text}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {item.time && !isNaN(new Date(item.time).getTime())
-                        ? new Date(item.time).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "Just now"}
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
-                    {item.val}
-                  </span>
-                </div>
-              ))}
-            </div>
-            {/* <button className="w-full mt-8 py-2 text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors border-t border-slate-100 dark:border-slate-800">
-            View All Activity
-          </button> */}
+            <ActivityFeed items={data.activity} />
           </div>
         </div>
       </div>
@@ -936,6 +645,13 @@ export default function AdminDashboard({ activeTab }: Props) {
     const [imagePreview, setImagePreview] = useState("");
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    const selectedId = searchParams.get("id");
+
+    const productRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
     const [form, setForm] = useState({
       name: "",
@@ -969,6 +685,25 @@ export default function AdminDashboard({ activeTab }: Props) {
     useEffect(() => {
       fetchData();
     }, []);
+
+    useEffect(() => {
+      if (!selectedId) return;
+
+      const el = productRefs.current[selectedId];
+
+      if (!el) return;
+
+      el.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      const timer = setTimeout(() => {
+        router.replace(`${pathname}?tab=products`);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }, [selectedId, products]);
 
     // Submit (Add / Update)
     const handleSubmit = async () => {
@@ -1114,7 +849,28 @@ export default function AdminDashboard({ activeTab }: Props) {
             {products.map((p) => (
               <div
                 key={p._id}
-                className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[2rem] shadow-sm hover:shadow-xl dark:hover:shadow-white/5 transition-all duration-300 min-h-[380px] flex flex-col justify-between"
+                ref={(el) => {
+                  productRefs.current[p._id] = el;
+                }}
+                className={`
+                group relative
+                bg-white dark:bg-slate-900
+                border
+                p-4
+                rounded-[2rem]
+                shadow-sm
+                hover:shadow-xl
+                dark:hover:shadow-white/5
+                transition-all duration-500
+                min-h-[380px]
+                flex flex-col justify-between
+
+                ${
+                  selectedId === p._id
+                    ? "ring-4 ring-blue-500 bg-blue-50 dark:bg-slate-800 scale-[1.02]"
+                    : "border-slate-200 dark:border-slate-800"
+                }
+              `}
               >
                 {/* UPPER WRAPPER (IMAGE + TITLE) */}
                 <div>
