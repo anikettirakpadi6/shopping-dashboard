@@ -1,14 +1,7 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, X, Loader2 } from "lucide-react";
 
-type UserType = {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  password?: string;
-};
+import type { UserType, UserForm } from "@/app/hooks/useUsers";
 
 type Props = {
   user: UserType | null;
@@ -17,15 +10,17 @@ type Props = {
 };
 
 export default function EditUserModal({ user, onClose, onSave }: Props) {
-  const [form, setForm] = useState<UserType>(
-    user || {
-      _id: "",
-      name: "",
-      email: "",
-      role: "customer",
-      isActive: true,
-      password: "",
-    },
+  const [form, setForm] = useState<UserForm>(
+    user
+      ? { ...user, password: "" }
+      : {
+          _id: "",
+          name: "",
+          email: "",
+          role: "customer",
+          isActive: true,
+          password: "",
+        },
   );
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{
@@ -181,7 +176,12 @@ export default function EditUserModal({ user, onClose, onSave }: Props) {
               <select
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all appearance-none"
                 value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    role: e.target.value as "admin" | "customer",
+                  })
+                }
               >
                 <option value="admin">Admin</option>
                 <option value="customer">Customer</option>
