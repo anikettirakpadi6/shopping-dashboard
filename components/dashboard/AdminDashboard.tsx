@@ -87,7 +87,7 @@ export default function AdminDashboard({ activeTab, search }: DashboardProps) {
     if (loading) return <Skeleton />;
 
     return (
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
         <DashboardHeader />
 
         <StatsGrid stats={data.stats} />
@@ -132,7 +132,7 @@ export default function AdminDashboard({ activeTab, search }: DashboardProps) {
     } = useUsers();
 
     return (
-      <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen">
         {/* Header Section */}
         <UsersHeader
           onAddUser={() => {
@@ -220,7 +220,7 @@ export default function AdminDashboard({ activeTab, search }: DashboardProps) {
       return <div className="p-8 text-slate-500">Loading metrics...</div>;
 
     return (
-      <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-500">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-500">
         <div className="flex items-center justify-between">
           <div className="flex items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
             {/* ICON WRAPPER */}
@@ -426,7 +426,7 @@ export default function AdminDashboard({ activeTab, search }: DashboardProps) {
     }, [selectedId, products]);
 
     return (
-      <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-all duration-500">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-all duration-500">
         {/* HEADER */}
         <ProductHeader onAdd={openCreateModal} />
 
@@ -469,7 +469,7 @@ export default function AdminDashboard({ activeTab, search }: DashboardProps) {
     const { orders, loading, fetchOrders, updateStatus } = useOrders();
 
     return (
-      <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-all duration-500 text-slate-900 dark:text-white">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-slate-50 dark:bg-slate-950 min-h-screen transition-all duration-500 text-slate-900 dark:text-white">
         {/* HEADER */}
         <OrdersHeader loading={loading} onRefresh={fetchOrders} />
 

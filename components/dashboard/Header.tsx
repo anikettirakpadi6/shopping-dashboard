@@ -17,11 +17,13 @@ import { useGlobalSearch } from "@/app/hooks/useGlobalSearch";
 import { useRouter } from "next/navigation";
 
 type Props = {
-    activeTab: string;
+  activeTab: string;
+  onMenuClick?: () => void;
 };
 
 export default function Header({
   activeTab,
+  onMenuClick
 }: Props) {
   const { data: session } = useSession();
   const userName = session?.user?.name || "User";
@@ -67,9 +69,18 @@ export default function Header({
     );
 
   return (
-    <header className="sticky top-0 z-30 flex justify-between items-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-8 py-4 border-b border-slate-200 dark:border-slate-800 transition-all duration-300">
+    <header className="sticky top-0 z-30 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 sm:px-8 py-4 border-b border-slate-200 dark:border-slate-800 transition-all duration-300">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-700"
+      >
+        <div className="w-5 h-0.5 bg-slate-900 dark:bg-white mb-1" />
+        <div className="w-5 h-0.5 bg-slate-900 dark:bg-white mb-1" />
+        <div className="w-5 h-0.5 bg-slate-900 dark:bg-white" />
+      </button>
       {/* Left: Search Bar */}
-      <div className="relative w-1/3 group">
+      <div className="relative w-full max-w-md group flex-1 sm:flex-none">
         <Search
           size={18}
           className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 dark:group-focus-within:text-white transition-colors"

@@ -3,6 +3,7 @@
 import React from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import { useState } from "react";
 
 type Props = {
   children: React.ReactNode;
@@ -17,19 +18,26 @@ const DashboardLayout: React.FC<Props> = ({
   activeTab,
   setActiveTab,
 }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div className="flex bg-white dark:bg-slate-900 min-h-screen transition-colors duration-300">
-        <Sidebar
-          role={role}
+    <div className="min-h-screen bg-white dark:bg-slate-900 transition-colors duration-300">
+      <Sidebar
+        role={role}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        open={sidebarOpen}
+        setOpen={setSidebarOpen}
+      />
+
+      <div className="flex min-h-screen flex-col lg:ml-64">
+       <Header
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          onMenuClick={() => setSidebarOpen(true)}
         />
 
-      <div className="flex-1 flex flex-col ml-64">
-        <Header activeTab={activeTab}/>
-        <div className="p-6 bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white min-h-screen transition-colors duration-300">
+        <main className="flex-1 bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white transition-colors duration-300 p-4 sm:p-6">
           {children}
-        </div>
+        </main>
       </div>
     </div>
   );
