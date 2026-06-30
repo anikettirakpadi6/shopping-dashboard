@@ -30,9 +30,13 @@ export const authOptions: NextAuthOptions = {
 
           if (!user.isActive) throw new Error("Account inactive.");
 
+          if (!user?.password) {
+            throw new Error("User password not found");
+          }
+
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
-            user.password,
+            user.password
           );
 
           if (!isPasswordValid) throw new Error("Invalid email or password!");

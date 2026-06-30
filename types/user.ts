@@ -12,3 +12,5 @@ export type UserSortKey =
   | "email"
   | "role"
   | "isActive";
+
+export type UserRole = "admin" | "customer";
